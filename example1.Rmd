@@ -177,7 +177,7 @@ ms_dn <- subset(msep$enrichment_result,p.adjustANOVA<0.05 & s.dist < 0)[,1]
 message(paste("Number of up-regulated pathways:",length(ms_up) ))
 message(paste("Number of down-regulated pathways:",length(ms_dn) ))
 head(msep$enrichment_result,10)  #%>% kbl() %>% kable_paper("hover", full_width = F)
-mitch_report(msep,outfile="mitch_separate.html",overwrite=TRUE)
+#mitch_report(msep,outfile="mitch_separate.html",overwrite=TRUE)
 
 ```
 
@@ -191,7 +191,22 @@ mc_dn <- subset(mcom$enrichment_result,p.adjustANOVA<0.05 & s.dist < 0)[,1]
 message(paste("Number of up-regulated pathways:",length(mc_up) ))
 message(paste("Number of down-regulated pathways:",length(mc_dn) ))
 head(mcom$enrichment_result,10)  #%>% kbl() %>% kable_paper("hover", full_width = F)
-mitch_report(mcom,outfile="mitch_combined.html",overwrite=TRUE)
+#mitch_report(mcom,outfile="mitch_combined.html",overwrite=TRUE)
+
+```
+
+Let's look at the significant ones based on the combined analysis.
+There weren't many gene sets classed as significant.
+Let's see how many have a direction agnostic enrichment score which is larger in magnitude than the direction informed enrichment score.
+There are only 11 such sets which would benefit from such combined analysis.
+
+```{r,mitchres1}
+
+mres$enrichment_result$padj.abs <- p.adjust(mres$enrichment_result$p.abs)
+mres2 <- subset(mres$enrichment_result, padj.abs < 0.05)
+
+subset(mres2, s.abs > abs(s.x))
+dim(subset(mres2, s.abs > abs(s.x)))
 
 ```
 
@@ -241,7 +256,7 @@ Here I'm doing both (separated and combined) at once.
 m$abs <- abs(m$x)
 mres <- mitch_calc(m,genesets = genesets)
 head(mres$enrichment_result,10)  #%>% kbl() %>% kable_paper("hover", full_width = F)
-mitch_report(mres,outfile="mitch_multi.html",overwrite=TRUE)
+#mitch_report(mres,outfile="mitch_multi.html",overwrite=TRUE)
 
 mm <- subset(mres$enrichment_result, p.adjustMANOVA<0.05)[,1]
 
