@@ -80,8 +80,8 @@ msummary <- function(dat) {
   m_sep_rec <- length(union(dat$FCS_up, dat$FCS_dn)) / length(m_all)
   m_com_rec <- length(dat$FCS_com) / length(m_all)
   res <- c("FCS_up"=length(dat$FCS_up),
-    "FCS_dn"=length(dat$FCS_dn),
-    "FCS_sep"=length(union(dat$FCS_up,dat$FCS_dn)),
+    "FCS dn"=length(dat$FCS_dn),
+    "FCS sep"=length(union(dat$FCS_up,dat$FCS_dn)),
     "FCS com"=length(dat$FCS_com),
     "FCS all"=length(m_all),
     "FCS sep rec"=m_sep_rec,
@@ -94,6 +94,9 @@ mres <- do.call(rbind,mres)
 rownames(mres) <- c("SRP128998","SRP038101","SRP096178","SRP038101","SRP247621","SRP253951","SRP068733")
 mres %>% kbl(caption="differentially expressed pathway detection using separated or combined FCS analysis for seven studies") %>% kable_paper("hover", full_width = F)
 
+# list format
+mresl <- lapply(1:ncol(mres),function(i) {mres[,i]} )
+names(mresl) <- colnames(mres)
 
 ```
 
@@ -116,47 +119,15 @@ HERENOW
 
 cols <- c("#CC79A7","#56B4E9","#E69F00","#F0E442","#009E73","#0072B2","#D55E00")
 coll <- list(cols, cols, cols, cols, cols)
-par(mar=c(5,10,3,1))
+par(mar=c(5,5,3,1))
 boxplot(mres[,1:5],col="white")
-beeswarm(mres[,1:5] ,labels = rev(colnames(mres)[1:5]), pwcol = coll, cex=1.5,pch=19, add = TRUE)
-legend("bottomright", legend=c("SRP128998", "SRP038101", "SRP096178","SRP038101","SRP247621","SRP253951","SRP068733"), pch=19,  col=cols, cex=1,pt.cex = 1.5)
-
-pdf("images/jacbox1.pdf",width=5,height=4)
-par(mar=c(5,9,3,2))
-boxplot(list(exdat[,5],exdat[,4],exdat[,3],exdat[,2],exdat[,1]),names = rev(colnames(exdat)),horizontal = TRUE, las=1 , col="white", cex=1.5,pch=19, xlab = "Jaccard index")
-beeswarm(list(exdat[,5],exdat[,4],exdat[,3],exdat[,2],exdat[,1]),labels = rev(colnames(exdat)),horizontal = TRUE, las=1 , pwcol = coll,cex=1.5,pch=19, xlab = "Jaccard index",add = TRUE)
+beeswarm(mresl[1:5] ,labels = rev(colnames(mres)[1:5]), pwcol = coll, cex=1.5,pch=19, add = TRUE)
 legend("topleft", legend=c("SRP128998", "SRP038101", "SRP096178","SRP038101","SRP247621","SRP253951","SRP068733"), pch=19,  col=cols, cex=1,pt.cex = 1.5)
-dev.off()
 
-png("images/jacbox1.png")
-par(mar=c(5,9,3,1))
-boxplot(list(exdat[,5],exdat[,4],exdat[,3],exdat[,2],exdat[,1]),names = rev(colnames(exdat)),horizontal = TRUE, las=1 , col="white", cex=1.5,pch=19, xlab = "Jaccard index")
-beeswarm(list(exdat[,5],exdat[,4],exdat[,3],exdat[,2],exdat[,1]),labels = rev(colnames(exdat)),horizontal = TRUE, las=1 , pwcol = coll,cex=1.5,pch=19, xlab = "Jaccard index",add = TRUE)
-legend("bottomright", legend=c("SRP128998", "SRP038101", "SRP096178","SRP038101","SRP247621","SRP253951","SRP068733"), pch=19,  col=cols, cex=1.2,pt.cex = 1.5)
-dev.off()
-
-
-```
-
-Now plot as a simple bargraph
-
-```{r,jacbar0}
-
-mymean <- colMeans(exdat)
-mysd <- apply(exdat,2,sd)
-
-par(mar=c(5,10,3,1))
-barplot(rev(colMeans(exdat)),xlab="mean Jaccard index",horiz = TRUE, las =1, xlim=c(0,.7) )
-
-pdf("images/jacbar1.pdf",width=4,height=4)
-par(mar=c(5,10,3,1))
-barplot(rev(colMeans(exdat)),xlab="mean Jaccard index",horiz = TRUE, las =1, xlim=c(0,.7) )
-dev.off()
-
-png("images/jacbar1.png")
-par(mar=c(5,10,3,1))
-barplot(rev(colMeans(exdat)),xlab="mean Jaccard index",horiz = TRUE, las =1, xlim=c(0,.7) )
-dev.off()
+coll <- list(cols, cols)
+boxplot(mres[,6:7],col="white")
+beeswarm(mresl[6:7] ,labels = rev(colnames(mres)[6:7]), pwcol = coll, cex=1.5,pch=19, add = TRUE)
+legend("bottomleft", legend=c("SRP128998", "SRP038101", "SRP096178","SRP038101","SRP247621","SRP253951","SRP068733"), pch=19,  col=cols, cex=1,pt.cex = 1.5)
 
 ```
 
