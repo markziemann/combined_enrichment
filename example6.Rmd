@@ -1,5 +1,5 @@
 ---
-title: "SRP128998: Combining up and downregulated genes in enrichment analysis?"
+title: "Example gene set analysis: The case of SARS-CoV2 infection"
 author: "Mark Ziemann & Kaumadi Wijesooriya"
 date: "`r Sys.Date()`"
 output:
@@ -16,13 +16,9 @@ Source: https://github.com/markziemann/combined_enrichment
 
 ## Intro
 
-Here we are performing an analysis of some gene expression data to understand whether direction agnostic (DA) or direction informed (DI) 
-enrichment analysis is recommended.
+Here we are performing an analysis of some gene expression data to demonstrate the difference between ORA and FCS methods and to highlight the differences caused by improper background gene set use.
 
-This will be demonstrated by using two approaches: mitch and clusterprofiler.
-Mitch is a FCS method while clusterprofiler is an ORA method.
-
-The dataset being used is SRP128998 and we are comparing the cells grown in normal glucose condition (control) to the high glucose condition (case).
+The dataset being used is SRP253951 and we are comparing A549 cells with and without infection with SARS-CoV-2.
 
 Data are obtained from http://dee2.io/
 
@@ -37,36 +33,35 @@ library("kableExtra")
 library("eulerr")
 })
 
-dir.create("images")
-
 ```
 
-## Get expression data and make an MDS plot
+## Get expression data
 
-I'm using some RNA-seq data looking at the effect of hyperglycemia on hepatocytes.
+I'm using some RNA-seq data looking at the difference in transcriptome caused by SARS-CoV-2 infection.
 
-```{r,getdata}
+```{r,getdata,fig.width=7,fig.height=7}
 
-name="SRP128998"
+name="SRP253951"
 mdat<-getDEE2Metadata("hsapiens")
-samplesheet <- mdat[grep("SRP128998",mdat$SRP_accession),]
-samplesheet<-samplesheet[order(samplesheet$SRR_accession),]
-samplesheet$trt<-as.factor(c(1,1,1,1,1,1,0,0,0,0,0,0))
-samplesheet$VPA<-as.factor(c(0,0,0,1,1,1,0,0,0,1,1,1))
-s1 <- subset(samplesheet,VPA==0)
+samplesheet <- mdat[grep("SRP253951",mdat$SRP_accession),]
 
-s1 #%>% kbl(caption = "sample sheet") %>% kable_paper("hover", full_width = F)
+samplesheet <- mdat[which(mdat$SRX_accession %in% c("SRX8089264","SRX8089265","SRX8089266","SRX8089267","SRX8089268","SRX8089269")),]
+
+samplesheet$trt <- factor(c(0,0,0,1,1,1))
+s1 <- samplesheet
+
+s1 %>% kbl(caption = "sample sheet") %>% kable_paper("hover", full_width = F)
 
 w<-getDEE2("hsapiens",samplesheet$SRR_accession,metadata=mdat,legacy = TRUE)
 x<-Tx2Gene(w)
-x<-x$Tx2Gene
+x <- x$Tx2Gene
 
 # save the genetable for later
 gt<-w$GeneInfo[,1,drop=FALSE]
 gt$accession<-rownames(gt)
 
 # counts 
-x1<-x[,which(colnames(x) %in% s1$SRR_accession)]
+x1<-x[,which(colnames(x) %in% samplesheet$SRR_accession)]
 
 ```
 
@@ -75,7 +70,7 @@ Here show the number of genes in the annotation set, and those detected above th
 ```{r,filter}
 
 # filter out lowly expressed genes
-x1<-x1[which(rowMeans(x1)>=(10)),]
+x1<-x1[which(rowSums(x1)/ncol(x1)>=(10)),]
 nrow(x)
 nrow(x1)
 
@@ -101,7 +96,7 @@ y <- DESeq(y)
 de <- results(y)
 de<-as.data.frame(de[order(de$pvalue),])
 rownames(de)<-sapply(strsplit(rownames(de),"\\."),"[[",1)
-head(de) #%>% kbl() %>% kable_paper("hover", full_width = F)
+head(de) %>% kbl() %>% kable_paper("hover", full_width = F)
 
 ```
 
@@ -161,6 +156,7 @@ if (! file.exists("ReactomePathways.gmt")) {
 genesets<-gmt_import("ReactomePathways.gmt")
 
 ```
+
 
 ## FCS with Mitch
 
@@ -354,7 +350,7 @@ dat <- list(  "FCS_up"=ms_up,
   "ORA_com"=o_com)
 
 str(dat)
-saveRDS(dat,file = "ex1dat.rds")
+saveRDS(dat,file = "ex6dat.rds")
 
 ```
 
