@@ -8,7 +8,7 @@ output:
     toc_float: true
     code_folding: hide
     fig_width: 7
-    fig_height: 5
+    fig_height: 7
 theme: cosmo
 ---
 
@@ -48,21 +48,26 @@ library("beeswarm")
 Here I'm running the scripts to analyse each of the example datasets shown in the above
 table.
 
+Only execute the examples if file `ex7dat.rds` does not exist.
+
 ```{r,execute0}
 
-rmarkdown::render("example1.Rmd")
-rmarkdown::render("example2.Rmd")
-rmarkdown::render("example3.Rmd")
-rmarkdown::render("example4.Rmd")
-rmarkdown::render("example5.Rmd")
-rmarkdown::render("example6.Rmd")
-rmarkdown::render("example7.Rmd")
+if ( ! file.exists("ex7dat.rds") ) {
+  rmarkdown::render("example1.Rmd")
+  rmarkdown::render("example2.Rmd")
+  rmarkdown::render("example3.Rmd")
+  rmarkdown::render("example4.Rmd")
+  rmarkdown::render("example5.Rmd")
+  rmarkdown::render("example6.Rmd")
+  rmarkdown::render("example7.Rmd")
+}
 
 ```
 
 ## Summarise
 
 Here I'm summarising the results of the five example data sets.
+Let's start with FCS and then ORA
 
 ```{r,getdata0,fig.width=7,fig.height=5}
 
@@ -79,7 +84,7 @@ msummary <- function(dat) {
   m_all  <- unique(c(dat$FCS_up ,dat$FCS_dn , dat$FCS_com ))
   m_sep_rec <- length(union(dat$FCS_up, dat$FCS_dn)) / length(m_all)
   m_com_rec <- length(dat$FCS_com) / length(m_all)
-  res <- c("FCS_up"=length(dat$FCS_up),
+  res <- c("FCS up"=length(dat$FCS_up),
     "FCS dn"=length(dat$FCS_dn),
     "FCS sep"=length(union(dat$FCS_up,dat$FCS_dn)),
     "FCS com"=length(dat$FCS_com),
@@ -93,10 +98,31 @@ mres <- lapply(list(ex1dat,ex2dat,ex3dat,ex4dat,ex5dat,ex6dat,ex7dat),msummary)
 mres <- do.call(rbind,mres)
 rownames(mres) <- c("SRP128998","SRP038101","SRP096178","SRP038101","SRP247621","SRP253951","SRP068733")
 mres %>% kbl(caption="differentially expressed pathway detection using separated or combined FCS analysis for seven studies") %>% kable_paper("hover", full_width = F)
-
 # list format
 mresl <- lapply(1:ncol(mres),function(i) {mres[,i]} )
 names(mresl) <- colnames(mres)
+
+osummary <- function(dat) {
+  ORA_all  <- unique(c(dat$ORA_up ,dat$ORA_dn , dat$ORA_com ))
+  ORA_sep_rec <- length(union(dat$ORA_up, dat$ORA_dn)) / length(ORA_all)
+  ORA_com_rec <- length(dat$ORA_com) / length(ORA_all)
+  res <- c("ORA up"=length(dat$ORA_up),
+    "ORA dn"=length(dat$ORA_dn),
+    "ORA sep"=length(union(dat$ORA_up,dat$ORA_dn)),
+    "ORA com"=length(dat$ORA_com),
+    "ORA all"=length(ORA_all),
+    "ORA sep rec"=ORA_sep_rec,
+    "ORA com rec"=ORA_com_rec)
+  return(res)
+}
+
+ores <- lapply(list(ex1dat,ex2dat,ex3dat,ex4dat,ex5dat,ex6dat,ex7dat),osummary)
+ores <- do.call(rbind,ores)
+rownames(ores) <- c("SRP128998","SRP038101","SRP096178","SRP038101","SRP247621","SRP253951","SRP068733")
+ores %>% kbl(caption="differentially expressed pathway detection using separated or combined ORA analysis for seven studies") %>% kable_paper("hover", full_width = F)
+# list format
+oresl <- lapply(1:ncol(ores),function(i) {ores[,i]} )
+names(oresl) <- colnames(ores)
 
 ```
 
@@ -106,30 +132,59 @@ means <- colMeans(mres)
 medians <- apply(mres,2,median)
 sds <- apply(mres,2,sd)
 summstats <- rbind(means,medians,sds)
-summstats %>% kbl(caption="summary statistics of different enrichment analysis comparisons") %>% kable_paper("hover", full_width = F)
+summstats %>% kbl(caption="summary statistics of FCS results") %>% kable_paper("hover", full_width = F)
+
+
+means <- colMeans(ores)
+medians <- apply(ores,2,median)
+sds <- apply(ores,2,sd)
+summstats <- rbind(means,medians,sds)
+summstats %>% kbl(caption="summary statistics of ORA results") %>% kable_paper("hover", full_width = F)
+
 
 ```
 
 Here let's plot the jaccard scores.
 First as a boxplot and then overlay the dataset studies over the top.
 
-HERENOW
+Mitch results.
 
-```{r,jacbox0}
+```{r,jacbox_fcs}
 
 cols <- c("#CC79A7","#56B4E9","#E69F00","#F0E442","#009E73","#0072B2","#D55E00")
 coll <- list(cols, cols, cols, cols, cols)
 par(mar=c(5,5,3,1))
-boxplot(mres[,1:5],col="white")
-beeswarm(mresl[1:5] ,labels = rev(colnames(mres)[1:5]), pwcol = coll, cex=1.5,pch=19, add = TRUE)
+boxplot(mres[,1:5],col="white",names = gsub("FCS ","",colnames(mres)[1:5]),ylab="no. gene sets identified",main="FCS")
+beeswarm(mresl[1:5] , pwcol = coll, cex=1.5,pch=19, add = TRUE, main="FCS")
 legend("topleft", legend=c("SRP128998", "SRP038101", "SRP096178","SRP038101","SRP247621","SRP253951","SRP068733"), pch=19,  col=cols, cex=1,pt.cex = 1.5)
 
 coll <- list(cols, cols)
-boxplot(mres[,6:7],col="white")
-beeswarm(mresl[6:7] ,labels = rev(colnames(mres)[6:7]), pwcol = coll, cex=1.5,pch=19, add = TRUE)
+mynames <- sub(" rec","",gsub("FCS ","",colnames(mres)[6:7]))
+boxplot(mres[,6:7],col="white", names = mynames, ylab="proportion of gene sets identified",main="FCS")
+beeswarm(mresl[6:7] , pwcol = coll, cex=1.5,pch=19, add = TRUE)
 legend("bottomleft", legend=c("SRP128998", "SRP038101", "SRP096178","SRP038101","SRP247621","SRP253951","SRP068733"), pch=19,  col=cols, cex=1,pt.cex = 1.5)
 
 ```
+
+ORA results.
+
+```{r,jacbox_ora}
+
+cols <- c("#CC79A7","#56B4E9","#E69F00","#F0E442","#009E73","#0072B2","#D55E00")
+coll <- list(cols, cols, cols, cols, cols)
+par(mar=c(5,5,3,1))
+boxplot(ores[,1:5],col="white",names = gsub("FCS ","",colnames(ores)[1:5]),ylab="no. gene sets identified",main="ORA")
+beeswarm(oresl[1:5] , pwcol = coll, cex=1.5,pch=19, add = TRUE, main="ORA")
+legend("topleft", legend=c("SRP128998", "SRP038101", "SRP096178","SRP038101","SRP247621","SRP253951","SRP068733"), pch=19,  col=cols, cex=1,pt.cex = 1.5)
+
+coll <- list(cols, cols)
+mynames <- sub(" rec","",gsub("ORA ","",colnames(ores)[6:7]))
+boxplot(ores[,6:7],col="white", names = mynames, ylab="proportion of gene sets identified",main="ORA")
+beeswarm(oresl[6:7] , pwcol = coll, cex=1.5,pch=19, add = TRUE)
+legend("bottomleft", legend=c("SRP128998", "SRP038101", "SRP096178","SRP038101","SRP247621","SRP253951","SRP068733"), pch=19,  col=cols, cex=1,pt.cex = 1.5)
+
+```
+
 
 ## Session information
 
