@@ -1,0 +1,96 @@
+# Should functional enrichment analysis be conducted separately for up- and down-regulated genes?
+
+Supervisor: Mark Ziemann
+
+## Background
+
+* Functional enrichment analysis is a very frequently used approach to understand the broader trends
+within omics data, especially gene expression microarrays and RNA-seq.
+
+* There are many algorithms, but ORA and FCS appears to be the most popular.
+
+* FCS is an approach whereby all genes are given a score depending on some differential expression
+metric, then an algorithm evaluates whether members of a gene set are collectively more up- or 
+down-regulated.
+
+* In a general sense, ORA is conducted first by selecting a set of genes of interest and then 
+determining with a statistical test whether the genes of interest are over-represented for particular
+functional annotations.
+
+* In the literature, ORA appears to be conducted in two ways. 
+Either by considering all differentially regulated genes as the genes of interest in a single test.
+Or by considering up- and down-regulated genes in separate ORA tests.
+
+* On the face of it, these two approaches are valid, however they address different null hypotheses.
+The former is simply a test for dysregulation irrespective of fold change direction.
+The latter is a directional test.
+
+* There is a common view that the combined analysis is the right approach as a gene set could contain 
+a mixture of up and down-regulated members.
+Such gene sets could be missed with the separate approach.
+
+* On the other hand, it has been already shown that due to the correlated nature of genes in a gene set, 
+separate analysis of up and downregulated genes is more sensitive than combined analysis.
+
+* The popularity of gene set analysis methods does not correlated with performance.
+Rather, popularity is inflenced by first-mover advantage and ease of use [2].
+
+## Aims and hypothesis
+
+* Here we investigate the apparent rift between method performance and popularity with a combination of
+approaches.
+
+* Firstly, we survey how common it is to conduct combined or separate ORA analysis.
+
+* Second, with seven independent RNA-seq datasets, we ask whether it is worthwhile to conduct combined 
+gene set analysis.
+
+* Lastly, we conduct a survey asking researchers about the reasons for selecting the methods in their
+articles, which should highlight reasons for why sub-optimal methods are used.
+
+## Methods
+
+From a previous sample of enrichment analysis articles published in 2019 [3], we subsetted for articles
+that conducted differential expression analysis. 
+These were examined for whether analysis was conducted based on combined, separate or both.
+
+To seven publicly available RNA-seq datasets were downloaded from DEE2 on 27th January 2022 [4].
+Transcript level counts were aggregated to genes using the getDEE2 R package v1.2.0. 
+Next, genes with an average of less than 10 reads per sample were omitted from downstream analysis. 
+Differential expression statistical analysis was conducted with DESeq2 v1.32.0 [5] to identify genes 
+altered by high glucose exposure.
+For gene set analysis, human Reactome gene sets [6] were downloaded in GMT format from the Reactome 
+website (accessed 27th January 2022).
+
+Over-representation analysis was conducted using clusterProfiler R package (v4.0.5) enricher function 
+that implements a hypergeometric test [34].
+No fold-change threshold was used to select genes for ORA. 
+The background gene set consisted of all detected genes.
+
+FCS was performed using the mitch R package v1.4.1 with default settings, which uses a rank-ANOVA 
+statistical test [10]. 
+Differentially expressed genes with FDR<0.05 were used for ORA analysis using 
+the clusterProfiler R package (v4.0.5) enricher function that implements a hypergeometric test [34]. 
+
+For genes and gene sets, a false discovery rate adjusted p-value (FDR) of 0.05 was considered 
+significant.
+Analyses were conducted in R version 4.1.2.
+Details of the contrasts examined are shown in Table 1.
+
+| Dataset | SRA accesion | genes in annotation set | genes detected | genes differentially expressed |
+| :---: | :---: | :---: | :---: | :---: | 
+| 1. | SRP128998 | 39297 | 15635 | 3472 |
+| 2. | SRP038101 | 39297 | 13926 | 3589 | 
+| 3. | SRP096178 | 39297 | 15477 | 9488 |
+| 4. | SRP038101 | 39297 | 15607 | 5150 | 
+| 5. | SRP247621 | 39297 | 14288 | 230 |
+| 6. | SRP253951 | 39297 | 15182 | 8588 |
+| 7. | SRP068733 | 39297 | 14255 | 7365 |
+
+## References
+
+1. Hong G, Zhang W, Li H, Shen X, Guo Z. Separate enrichment analysis of pathways for up- and downregulated genes. J R Soc Interface. 2013 Dec 18;11(92):20130950. doi: 10.1098/rsif.2013.0950. PMID: 24352673; PMCID: PMC3899863.
+
+2. Xie C, Jauhari S, Mora A. Popularity and performance of bioinformatics software: the case of gene set analysis. BMC Bioinformatics. 2021 Apr 15;22(1):191. doi: 10.1186/s12859-021-04124-5. PMID: 33858350; PMCID: PMC8050894.
+
+3. Wijesooriya K, Jadaan SA, Perera KL, Kaur T, Ziemann M. Guidelines for reliable and reproducible functional enrichment analysis. bioRxiv 2021.09.06.459114; doi: https://doi.org/10.1101/2021.09.06.459114
