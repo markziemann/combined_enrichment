@@ -42,7 +42,9 @@ approaches.
 
 * Firstly, we survey how common it is to conduct combined or separate ORA analysis.
 
-* Second, with seven independent RNA-seq datasets, we ask whether it is worthwhile to conduct combined 
+* Second, using the Illumina bodymap expression dataset we will examine the correlation structure of genes in a set.
+
+* Next, with seven independent RNA-seq datasets, we ask whether it is worthwhile to conduct combined 
 gene set analysis.
 
 * Lastly, we conduct a survey asking researchers about the reasons for selecting the methods in their
@@ -58,6 +60,13 @@ From this set of articles, we selected subsetted for articles that conducted dif
 analysis.
 These were examined for whether functional enrichment analysis was conducted based on combined, 
 separate or both.
+
+### Examination of correlation structure in RNA-seq data
+
+Illumina bodymap data was downloaded from the DEE2 database with the getDEE2 R package.
+Genes with fewer than 10 reads on average across the samples set were discarded.
+Gene expression correlation analysis (Spearman) was conducted for each gene set with 10 or members in the dataset.
+These correlation values were compared, to correlation values derived from a set of randomly selected genes using a t-test.
 
 ### Impact of combined or separate enrichment analysis on real RNA-seq data
 
@@ -125,6 +134,16 @@ We sent a questionnaire to authors of the 186 open access articles selected abov
 A similar questionnaire was circulated on social media to users of ORA tools such as DAVID, PANTHER, KOBAS and clusterProfiler, asking about their last 
 
 * Over the last three years, which ORA tool have you used the most in your publications?
+
+## Results
+
+### Most ORA are conducted using a combined set of up- and down-regulated genes
+
+### Members of curated gene sets are positively correlated
+
+### Combined analysis of up- and down-regulated genes severely impairs sensitivity of ORA tests
+
+### ORA methodological choices by researchers are not driven by precident, not performance
 
 ## References
 
