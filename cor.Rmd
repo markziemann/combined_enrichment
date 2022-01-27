@@ -161,13 +161,24 @@ return(c("stat"=tt$statistic,"pvalue"=tt$p.value))
 
 res2 <- do.call(rbind,res2)
 
+summary(res2)
+
 ```
 
 Now visualise the test statistics found.
 
 ```{r,viz2}
 
+par(mfrow=c(2,1))
+#hist(res2[,"stat.t"],xlim=c(-50,50),breaks=100,main="",xlab="test statistic")
+hist(res2[,"stat.t"],breaks=100,main="",xlab="test statistic")
+boxplot(res2[,"stat.t"],horizontal=TRUE)
+
+
 hist(res2[,"stat.t"],xlim=c(-50,50),breaks=100,main="",xlab="test statistic")
+boxplot(res2[,"stat.t"],ylim=c(-50,50),horizontal=TRUE)
+
+par(mfrow=c(1,1))
 
 pos <- length( which(res2[,1]>0 & res2[,2] < 0.05) )
 neg <- length( which(res2[,1]<0 & res2[,2] < 0.05) )
