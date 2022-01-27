@@ -139,11 +139,47 @@ A similar questionnaire was circulated on social media to users of ORA tools suc
 
 ### Most ORA are conducted using a combined set of up- and down-regulated genes
 
+From 109 selected open-articles that performed ORA on differential expression data, 28 (25%) considered the up- and down-regulated 
+gene lists in separate tests, while 76 (69%) performed combined analysis of up- and downregulated genes.
+Five of the 109 studies did not describe whether the gene lists were combined or not.
+This finding outlines that ORA with combined gene set is much more common than separated analysis.
+
 ### Members of curated gene sets are positively correlated
+
+Combined analysis is a problem if genes in a set are highly correlated.
+Hong demonstrated this correlation by showing that genes in a set were more likely to show 
+imbalanced gene regulation direction.
+We thought we would investigate this further by looking at correlation structure of Reactome gene set members in
+the Illumina Bodymap RNA-seq dataset.
+There were 21,991 genes above our detection threshold across these 48 samples.
+Spearman correlation coefficients (rho) were calculated between genes in each set.
+For comparison, rho was also calculated for members of a set of randomly selected genes of equal size.
+The t-test statistic distribution indicates a strong positive skew, suggesting some degree of correlation for most gene sets.
+When the t-test p-values were considered, 1132 gene sets were indicative of positive correlation (p<0.05), 
+65 showed negative correlation (p<0.05) and 332 were neutral (p>0.05).
+RNA polymerase II transcription is shown as an example of a positively correlated set.
+Transport of small molecules is shown as an example of a negatively correlated set.
+This data shows that it is more common for members of a gene set to be positively correlated.
 
 ### Combined analysis of up- and down-regulated genes severely impairs sensitivity of ORA tests
 
-### ORA methodological choices by researchers are not driven by precident, not performance
+We examined seven independent differential RNA-seq experiments, each with 230 to 9488 differentially expressed genes.
+ORA was conducted both with combined and separated gene lists, revealing that separated gene list analysis
+consistently detected a larger proportion of differentially regulated gene sets.
+Nevertheless there was a small number of gene sets which were specific to the combined analysis.
+
+We also performed FCS for these same profiles, which consistently yielded more statistically significant sets than with ORA.
+Of note, the combined analysis with FCS identified a larger proportion of gene sets as compared to ORA combined.
+
+These results confirm that ORA with separate analysis of up- and down-regulated gene lists is more sensitive than
+the combined approach.
+Furthermore, FCS was more sentitive in all tests conducted.
+
+## Discussion
+
+ORA methodological choices by researchers are not driven by benchmarking performance. 
+More likely they are driven by precidence and ease of use.
+
 
 ## References
 
