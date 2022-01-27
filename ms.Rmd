@@ -50,9 +50,16 @@ articles, which should highlight reasons for why sub-optimal methods are used.
 
 ## Methods
 
-From a previous sample of enrichment analysis articles published in 2019 [3], we subsetted for articles
-that conducted differential expression analysis. 
-These were examined for whether analysis was conducted based on combined, separate or both.
+### Survey of published enrichment practices
+
+Previously, we compiled a set of 186 open-access articles with terms "enrichment analysis", 
+"pathway analysis" or "ontology analysis" in the abstract [3].
+From this set of articles, we selected subsetted for articles that conducted differential expression
+analysis.
+These were examined for whether functional enrichment analysis was conducted based on combined, 
+separate or both.
+
+### Impact of combined or separate enrichment analysis on real RNA-seq data
 
 To seven publicly available RNA-seq datasets were downloaded from DEE2 on 27th January 2022 [4].
 Transcript level counts were aggregated to genes using the getDEE2 R package v1.2.0. 
@@ -77,15 +84,47 @@ significant.
 Analyses were conducted in R version 4.1.2.
 Details of the contrasts examined are shown in Table 1.
 
-| Dataset | SRA accesion | genes in annotation set | genes detected | genes differentially expressed |
-| :---: | :---: | :---: | :---: | :---: | 
-| 1. | SRP128998 | 39297 | 15635 | 3472 |
-| 2. | SRP038101 | 39297 | 13926 | 3589 | 
-| 3. | SRP096178 | 39297 | 15477 | 9488 |
-| 4. | SRP038101 | 39297 | 15607 | 5150 | 
-| 5. | SRP247621 | 39297 | 14288 | 230 |
-| 6. | SRP253951 | 39297 | 15182 | 8588 |
-| 7. | SRP068733 | 39297 | 14255 | 7365 |
+| SRA accession and citation | Control datasets | Case datasets | Genes detected | Genes differentially expressed |
+| :---: | :---: | :---: | :---: | :---: |
+| SRP128998 [31] | GSM2932797 GSM2932798 GSM2932799 | GSM2932791 GSM2932792 GSM2932793 | 15635 | 3472 |
+| SRP038101 [35] | GSM1329862 GSM1329863 GSM1329864 | GSM1329859 GSM1329860 GSM1329861 | 13926 | 3589 |
+| SRP037718 [36] | GSM1326472 GSM1326473 GSM1326474 | GSM1326469 GSM1326470 GSM1326471 | 15477 | 9488 | 
+| SRP096177 [37] | GSM2448985 GSM2448986 GSM2448987 | GSM2448982 GSM2448983 GSM2448984 | 15607 | 5150 |
+| SRP247621 [38] | GSM4300737 GSM4300738 GSM4300739 | GSM4300731 GSM4300732 GSM4300733 | 14288 | 230 |
+| SRP253951 [39] | GSM4462339 GSM4462340 GSM4462341 | GSM4462336 GSM4462337 GSM4462338 | 15182 | 8588 |
+| SRP068733 [40] | GSM2044431 GSM2044432 GSM2044433 | GSM2044428 GSM2044429 GSM2044430 | 14255 | 7365 |
+
+### Survey of methodological choices by researchers
+
+We sent a questionnaire to authors of the 186 open access articles selected above and asked the following questions:
+
+* In your 2019 article, what tool did you use?
+
+* Did you select this tool based on its previous popularity in similar journals?
+
+* Did you select this tool based on its performance in benchmarking studies?
+
+* Did you select this tool based on its ease of use?
+
+* What other motivators prompted you to use this tool?
+
+* Are you aware of the benchmarked performance of your chosen tool against some other methods?
+
+* Do you think it's important to use a custom background (reference) gene list?
+
+* Do you think it's important to perform false discovery rate correction for multiple tests?
+
+* For your 2019 article, did you perform separate analysis of up- and down-regulated genes, or combined?
+
+* Why did you choose this approach?
+
+* How long have you been using bioinformatics tools?
+
+* Would you consider yourself a beginner in computational biology or a seasoned veteran?
+
+A similar questionnaire was circulated on social media to users of ORA tools such as DAVID, PANTHER, KOBAS and clusterProfiler, asking about their last 
+
+* Over the last three years, which ORA tool have you used the most in your publications?
 
 ## References
 
