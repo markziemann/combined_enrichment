@@ -1,6 +1,6 @@
 ---
 title: "Example gene set analysis: The case of LHON causing mutations"
-author: "Mark Ziemann & Kaumadi Wijesooriya"
+author: "Mark Ziemann"
 date: "`r Sys.Date()`"
 output:
   html_document:

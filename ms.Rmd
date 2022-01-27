@@ -1,6 +1,18 @@
-# Should functional enrichment analysis be conducted separately for up- and down-regulated genes?
+---
+title: "Should functional enrichment analysis be conducted separately for up- and down-regulated genes?"
+author: "Mark Ziemann"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
+    fig_width: 7
+    fig_height: 7
+theme: cosmo
+---
 
-Supervisor: Mark Ziemann
+Source: https://github.com/markziemann/combined_enrichment
 
 ## Background
 
@@ -139,8 +151,9 @@ A similar questionnaire was circulated on social media to users of ORA tools suc
 
 ### Most ORA are conducted using a combined set of up- and down-regulated genes
 
-From 109 selected open-articles that performed ORA on differential expression data, 28 (25%) considered the up- and down-regulated 
-gene lists in separate tests, while 76 (69%) performed combined analysis of up- and downregulated genes.
+From 109 selected open-articles that performed ORA on differential expression data, 28 (25%) considered 
+the up- and down-regulated gene lists in separate tests, while 76 (69%) performed combined analysis of up- 
+and downregulated genes (Fig 1).
 Five of the 109 studies did not describe whether the gene lists were combined or not.
 This finding outlines that ORA with combined gene set is much more common than separated analysis.
 
@@ -154,7 +167,7 @@ the Illumina Bodymap RNA-seq dataset.
 There were 21,991 genes above our detection threshold across these 48 samples.
 Spearman correlation coefficients (rho) were calculated between genes in each set.
 For comparison, rho was also calculated for members of a set of randomly selected genes of equal size.
-The t-test statistic distribution indicates a strong positive skew, suggesting some degree of correlation for most gene sets.
+The t-test statistic distribution indicates a strong positive skew, suggesting some degree of correlation for most gene sets (Fig 2).
 When the t-test p-values were considered, 1132 gene sets were indicative of positive correlation (p<0.05), 
 65 showed negative correlation (p<0.05) and 332 were neutral (p>0.05).
 RNA polymerase II transcription is shown as an example of a positively correlated set.
@@ -165,7 +178,7 @@ This data shows that it is more common for members of a gene set to be positivel
 
 We examined seven independent differential RNA-seq experiments, each with 230 to 9488 differentially expressed genes.
 ORA was conducted both with combined and separated gene lists, revealing that separated gene list analysis
-consistently detected a larger proportion of differentially regulated gene sets.
+consistently detected a larger proportion of differentially regulated gene sets (Fig 3).
 Nevertheless there was a small number of gene sets which were specific to the combined analysis.
 
 We also performed FCS for these same profiles, which consistently yielded more statistically significant sets than with ORA.
@@ -176,6 +189,13 @@ the combined approach.
 Furthermore, FCS was more sentitive in all tests conducted.
 
 ## Discussion
+
+* This finding outlines that ORA with combined gene set is much more common than separated analysis.
+
+* This data shows that it is more common for members of a gene set to be positively correlated.
+
+* These results confirm that ORA with separate analysis of up- and down-regulated gene lists is more sensitive than
+the combined approach.
 
 ORA methodological choices by researchers are not driven by benchmarking performance. 
 More likely they are driven by precidence and ease of use.

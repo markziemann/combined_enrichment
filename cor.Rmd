@@ -30,6 +30,7 @@ suppressPackageStartupMessages({
   library("gplots")
   library("Hmisc")
   library("parallel")
+  library("vioplot")
 })
 
 ```
@@ -161,16 +162,90 @@ return(c("stat"=tt$statistic,"pvalue"=tt$p.value))
 
 res2 <- do.call(rbind,res2)
 
+rownames(res2) <- sapply(res,"[[",3)
 summary(res2)
 
 ```
 
+Now we can look at the positive and negatively correlated gene sets.
+
+```{r,poscor}
+
+poscor <- head(res2[order(-res2[,1]),],10) 
+poscor %>% kbl(caption="most correlated gene sets") %>% kable_paper("hover", full_width = F)
+poscor_res <- res[which(sapply(res,"[[",3) %in% rownames(poscor))]
+
+```
+
+Vioplot of positively correlated sets.
+
+```{r,posvio}
+
+z <- lapply(1:length(poscor_res), function(i){
+setname <- poscor_res[[i]]$setname
+gset <- genesets[[which(names(genesets) ==setname)]]
+eset <- rownames(dat$GeneInfo[which(dat$GeneInfo$GeneSymbol %in% gset),])
+n <- length(which(eset %in% rownames(rpm)))
+vioplot(poscor_res[[i]][1:2] , ylab="Spearman rho",main=setname  )
+mtext(paste("n=",n))
+})
+
+```
+
+Heatmap of pos cor sets.
+
+```{r,posheat}
+z <- lapply(1:10, function(i) {
+setname <- rownames(poscor)[i]
+gset <- genesets[[which(names(genesets) ==setname)]]
+eset <- rownames(dat$GeneInfo[which(dat$GeneInfo$GeneSymbol %in% gset),])
+mx <- rpm[which(rownames(rpm) %in% eset),]
+heatmap.2(as.matrix(mx),trace="none",scale="row",main=setname, margin=c(5,7))
+})
+
+```
+
+Now focus on negatively correlated sets.
+
+```{r,anticor}
+
+anticor <- head(res2[order(res2[,1]),],10)
+anticor %>% kbl(caption="most anti-correlated gene sets") %>% kable_paper("hover", full_width = F)
+anticor_res <- res[which(sapply(res,"[[",3) %in% rownames(anticor))]
+
+```
+
+```{r,negvio}
+
+z <- lapply(1:length(anticor_res), function(i){
+setname <- anticor_res[[i]]$setname
+gset <- genesets[[which(names(genesets) ==setname)]]
+eset <- rownames(dat$GeneInfo[which(dat$GeneInfo$GeneSymbol %in% gset),])
+n <- length(which(eset %in% rownames(rpm)))
+vioplot(anticor_res[[i]][1:2] , ylab="Spearman rho",main=setname  )
+mtext(paste("n=",n))
+})
+
+```
+
+Heatmap of neg cor sets.
+
+```{r,negheat}
+
+z <- lapply(1:10, function(i) {
+setname <- rownames(anticor)[i]
+gset <- genesets[[which(names(genesets) ==setname)]]
+eset <- rownames(dat$GeneInfo[which(dat$GeneInfo$GeneSymbol %in% gset),])
+mx <- rpm[which(rownames(rpm) %in% eset),]
+heatmap.2(as.matrix(mx),trace="none",scale="row",main=setname,margin=c(5,7))
+})
+
+```
 Now visualise the test statistics found.
 
 ```{r,viz2}
 
 par(mfrow=c(2,1))
-#hist(res2[,"stat.t"],xlim=c(-50,50),breaks=100,main="",xlab="test statistic")
 hist(res2[,"stat.t"],breaks=100,main="",xlab="test statistic")
 boxplot(res2[,"stat.t"],horizontal=TRUE)
 
@@ -192,6 +267,8 @@ text(((1:length(bars))-0.5)*1.25,bars+50,labels=bars)
 ## Conclusions
 
 This work confirms the observations by Hong, that genes in a set are on the whole, most gene sets positively correlated members.
+
+Some gene sets are highly correlated, while others are heterogenous, or slightly anticorrelated.
 
 We can try to reproduce this correlation structure in simulated data.
 

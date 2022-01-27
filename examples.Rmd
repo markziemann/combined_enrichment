@@ -1,6 +1,6 @@
 ---
 title: "Gene set analysis misuse examples"
-author: "Mark Ziemann & Kaumadi Wijesooriya"
+author: "Mark Ziemann"
 date: "`r Sys.Date()`"
 output:
   html_document:
@@ -90,7 +90,9 @@ msummary <- function(dat) {
     "FCS com"=length(dat$FCS_com),
     "FCS all"=length(m_all),
     "FCS sep rec"=m_sep_rec,
-    "FCS com rec"=m_com_rec)
+    "FCS com rec"=m_com_rec,
+    "FCS sep only"=length(setdiff(union(dat$FCS_up,dat$FCS_dn),dat$FCS_com )),
+    "FCS com only"=length(setdiff(dat$FCS_com , union(dat$FCS_up,dat$FCS_dn))) )
   return(res)
 }
 
@@ -112,7 +114,9 @@ osummary <- function(dat) {
     "ORA com"=length(dat$ORA_com),
     "ORA all"=length(ORA_all),
     "ORA sep rec"=ORA_sep_rec,
-    "ORA com rec"=ORA_com_rec)
+    "ORA com rec"=ORA_com_rec,
+    "ORA sep only"=length(setdiff(union(dat$ORA_up,dat$ORA_dn),dat$ORA_com )),
+    "ORA com only"=length(setdiff(dat$ORA_com , union(dat$ORA_up,dat$ORA_dn))) )
   return(res)
 }
 
@@ -164,6 +168,12 @@ boxplot(mres[,6:7],col="white", names = mynames, ylab="proportion of gene sets i
 beeswarm(mresl[6:7] , pwcol = coll, cex=1.5,pch=19, add = TRUE)
 legend("bottomleft", legend=c("SRP128998", "SRP038101", "SRP096178","SRP038101","SRP247621","SRP253951","SRP068733"), pch=19,  col=cols, cex=1,pt.cex = 1.5)
 
+coll <- list(cols, cols)
+mynames <- sub(" rec","",gsub("FCS ","",colnames(mres)[8:9]))
+boxplot(mres[,8:9],col="white", names = mynames, ylab="no. gene sets unique to each approach",main="FCS")
+beeswarm(mresl[8:9] , pwcol = coll, cex=1.5,pch=19, add = TRUE)
+legend("topright", legend=c("SRP128998", "SRP038101", "SRP096178","SRP038101","SRP247621","SRP253951","SRP068733"), pch=19,  col=cols, cex=1,pt.cex = 1.5)
+
 ```
 
 ORA results.
@@ -173,7 +183,7 @@ ORA results.
 cols <- c("#CC79A7","#56B4E9","#E69F00","#F0E442","#009E73","#0072B2","#D55E00")
 coll <- list(cols, cols, cols, cols, cols)
 par(mar=c(5,5,3,1))
-boxplot(ores[,1:5],col="white",names = gsub("FCS ","",colnames(ores)[1:5]),ylab="no. gene sets identified",main="ORA")
+boxplot(ores[,1:5],col="white",names = gsub("ORA ","",colnames(ores)[1:5]),ylab="no. gene sets identified",main="ORA")
 beeswarm(oresl[1:5] , pwcol = coll, cex=1.5,pch=19, add = TRUE, main="ORA")
 legend("topleft", legend=c("SRP128998", "SRP038101", "SRP096178","SRP038101","SRP247621","SRP253951","SRP068733"), pch=19,  col=cols, cex=1,pt.cex = 1.5)
 
@@ -183,7 +193,19 @@ boxplot(ores[,6:7],col="white", names = mynames, ylab="proportion of gene sets i
 beeswarm(oresl[6:7] , pwcol = coll, cex=1.5,pch=19, add = TRUE)
 legend("bottomleft", legend=c("SRP128998", "SRP038101", "SRP096178","SRP038101","SRP247621","SRP253951","SRP068733"), pch=19,  col=cols, cex=1,pt.cex = 1.5)
 
+coll <- list(cols, cols)
+mynames <- sub(" rec","",gsub("ORA ","",colnames(ores)[8:9]))
+boxplot(ores[,8:9],col="white", names = mynames, ylab="no. gene sets unique to each approach",main="ORA")
+beeswarm(oresl[8:9] , pwcol = coll, cex=1.5,pch=19, add = TRUE)
+legend("topright", legend=c("SRP128998", "SRP038101", "SRP096178","SRP038101","SRP247621","SRP253951","SRP068733"), pch=19,  col=cols, cex=1,pt.cex = 1.5)
+
 ```
+
+## Conclusions
+
+
+
+
 
 
 ## Session information
