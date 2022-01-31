@@ -1,0 +1,280 @@
+---
+title: "Examining correlation structure in RNA-seq data"
+author: "Mark Ziemann"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
+    fig_width: 7
+    fig_height: 7
+theme: cosmo
+---
+
+Source: https://github.com/markziemann/combined_enrichment
+
+## Intro
+
+This script is designed to fetch GTEXv8 RNA-seq expression data in order to assess the correlation of genes within a gene set.
+
+```{r,begin0}
+
+suppressPackageStartupMessages({
+  library("kableExtra")
+  library("beeswarm")
+  library("getDEE2")
+  library("mitch")
+  library("gplots")
+  library("Hmisc")
+  library("parallel")
+  library("vioplot")
+})
+
+```
+
+## Fetch data
+
+First get gene expression data.
+
+```{r,fetch_expression_data}
+
+DATURL="https://storage.googleapis.com/gtex_analysis_v8/rna_seq_data/GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_reads.gct.gz"
+if (! file.exists("GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_reads.gct.gz") ) {
+  download.file(DATURL,destfile="GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_reads.gct.gz")
+  tmp <- readLines("GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_reads.gct.gz")
+  tmp <- tmp[3:length(tmp)]
+  writeLines(tmp,con="GTEx_data.tsv")
+}
+mx <- read.table("GTEx_data.tsv",header=TRUE,row.names=1)
+mx[1:6,1:4]
+dim(mx)
+
+# downsample 50 samples only
+mx <- mx[,1:50]
+
+mx2 <- aggregate(. ~ Description,mx,sum)
+mx2[1:6,1:4]
+dim(mx2)
+
+# filter based on detection threshold
+rownames(mx2) <- mx2[,1]
+mx2[,1]=NULL
+mx2 <- mx2[which(rowMeans(mx2)>=10),]
+dim(mx2)
+
+# normalise
+mx2 <- mx2/colSums(mx2) * 1000000
+rpm <- mx2
+# tidy up some files
+remove(mx)
+
+```
+
+Next get pathways.
+
+```{r,reactome}
+
+if (! file.exists("ReactomePathways.gmt")) {
+  download.file("https://reactome.org/download/current/ReactomePathways.gmt.zip", 
+    destfile="ReactomePathways.gmt.zip")
+  unzip("ReactomePathways.gmt.zip")
+}
+genesets<-gmt_import("ReactomePathways.gmt")
+
+```
+
+## Assess the correlation structure
+
+```{r,flatcor}
+
+# ++++++++++++++++++++++++++++
+# flattenCorrMatrix
+# ++++++++++++++++++++++++++++
+# cormat : matrix of the correlation coefficients
+# pmat : matrix of the correlation p-values
+flattenCorrMatrix <- function(cormat, pmat) {
+  ut <- upper.tri(cormat)
+  data.frame(
+    row = rownames(cormat)[row(cormat)[ut]],
+    column = rownames(cormat)[col(cormat)[ut]],
+    cor  =(cormat)[ut],
+    p = pmat[ut]
+    )
+}
+
+```
+
+
+```{r,cor1}
+
+res <- mclapply(1:length(genesets), function(i){
+  gs <- genesets[[i]]
+  len <- length(gs)
+  x <- rpm[which(rownames(rpm) %in% gs),]
+  if(nrow(x)>=10) {
+    res <- rcorr(as.matrix(t(x)),type="spearman")
+    res <- flattenCorrMatrix(res$r, res$P)
+    # randomly select gene ids as a comparison
+    y <- rpm[sample(which(! rownames(rpm) %in% gs),size=len,replace=FALSE),]
+    res2 <- rcorr(as.matrix(t(y)),type="spearman")
+    res2 <- flattenCorrMatrix(res2$r, res2$P)
+    cormax <- max(c(res$cor,res2$cor))
+    cormin <- min(c(res$cor,res2$cor))
+    setname <- names(genesets[i])
+    result <- list("inset"=res$cor, "rand"=res2$cor,"setname"=setname)
+    return(result) 
+  }
+}, mc.cores=16)
+
+```
+
+looks like some empty results. Let's get rid of those now.
+
+```{r,filt}
+
+str(head(res))
+res <- res[which(lapply(res,length)>0)]
+str(head(res))
+
+```
+
+We can visualise the spearman correlation coefficients here.
+
+```{r,viz1}
+
+z <- lapply(1:6, function(i){
+setname <- res[[i]]$setname
+boxplot(res[[i]][1:2],col="white",ylab="Spearman rho",main=setname)
+beeswarm(res[[i]][1:2],add=TRUE,pch=19)
+})
+
+```
+
+We can run a t-test to quantify the difference in distributions.
+
+```{r,test1}
+
+res2 <- lapply(1:length(res), function(i) {
+inset <- res[[i]]$inset
+rand <- res[[i]]$rand
+tt <- t.test(x=inset,y=rand)
+return(c("stat"=tt$statistic,"pvalue"=tt$p.value))
+})
+
+res2 <- do.call(rbind,res2)
+
+rownames(res2) <- sapply(res,"[[",3)
+summary(res2)
+
+```
+
+Now we can look at the positive and negatively correlated gene sets.
+
+```{r,poscor}
+
+poscor <- head(res2[order(-res2[,1]),],10) 
+poscor %>% kbl(caption="most correlated gene sets") %>% kable_paper("hover", full_width = F)
+poscor_res <- res[which(sapply(res,"[[",3) %in% rownames(poscor))]
+
+```
+
+Vioplot of positively correlated sets.
+
+```{r,posvio}
+
+z <- lapply(1:length(poscor_res), function(i){
+setname <- poscor_res[[i]]$setname
+gset <- genesets[[which(names(genesets) ==setname)]]
+n <- length(which(gset %in% rownames(rpm)))
+vioplot(poscor_res[[i]][1:2] , ylab="Spearman rho",main=setname  )
+mtext(paste("n=",n))
+})
+
+```
+
+Heatmap of pos cor sets.
+
+```{r,posheat}
+z <- lapply(1:10, function(i) {
+setname <- rownames(poscor)[i]
+gset <- genesets[[which(names(genesets) ==setname)]]
+mx <- rpm[which(rownames(rpm) %in% gset),]
+heatmap.2(as.matrix(mx),trace="none",scale="row",main=setname, margin=c(5,7))
+})
+
+```
+
+Now focus on negatively correlated sets.
+
+```{r,anticor}
+
+anticor <- head(res2[order(res2[,1]),],10)
+anticor %>% kbl(caption="most anti-correlated gene sets") %>% kable_paper("hover", full_width = F)
+anticor_res <- res[which(sapply(res,"[[",3) %in% rownames(anticor))]
+
+```
+
+```{r,negvio}
+
+z <- lapply(1:length(anticor_res), function(i){
+setname <- anticor_res[[i]]$setname
+gset <- genesets[[which(names(genesets) ==setname)]]
+n <- length(which(gset %in% rownames(rpm)))
+vioplot(anticor_res[[i]][1:2] , ylab="Spearman rho",main=setname  )
+mtext(paste("n=",n))
+})
+
+```
+
+Heatmap of neg cor sets.
+
+```{r,negheat}
+
+z <- lapply(1:10, function(i) {
+setname <- rownames(anticor)[i]
+gset <- genesets[[which(names(genesets) ==setname)]]
+eset <- rownames(dat$GeneInfo[which(dat$GeneInfo$GeneSymbol %in% gset),])
+mx <- rpm[which(rownames(rpm) %in% eset),]
+heatmap.2(as.matrix(mx),trace="none",scale="row",main=setname,margin=c(5,7))
+})
+
+```
+Now visualise the test statistics found.
+
+```{r,viz2}
+
+par(mfrow=c(2,1))
+hist(res2[,"stat.t"],breaks=100,main="",xlab="test statistic")
+boxplot(res2[,"stat.t"],horizontal=TRUE)
+
+
+hist(res2[,"stat.t"],xlim=c(-50,50),breaks=100,main="",xlab="test statistic")
+boxplot(res2[,"stat.t"],ylim=c(-50,50),horizontal=TRUE)
+
+par(mfrow=c(1,1))
+
+pos <- length( which(res2[,1]>0 & res2[,2] < 0.05) )
+neg <- length( which(res2[,1]<0 & res2[,2] < 0.05) )
+none <- length( which(res2[,2] > 0.05) )
+bars <- c("Pos"=pos,"None"=none,"Neg"=neg)
+barplot(bars,ylab="no. gene sets with correlated expression",ylim=c(0,max(bars)*1.3))
+text(((1:length(bars))-0.5)*1.25,bars+50,labels=bars)
+
+```
+
+## Conclusions
+
+This work confirms the observations by Hong, that genes in a set are on the whole, most gene sets positively correlated members.
+
+Some gene sets are highly correlated, while others are heterogenous, or slightly anticorrelated.
+
+We can try to reproduce this correlation structure in simulated data.
+
+## Session information
+
+```{r,session0}
+
+sessionInfo()
+
+```
