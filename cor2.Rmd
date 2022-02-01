@@ -51,7 +51,8 @@ mx[1:6,1:4]
 dim(mx)
 
 # downsample 50 samples only
-mx <- mx[,1:50]
+# for testing only
+#mx <- mx[,1:50]
 
 mx2 <- aggregate(. ~ Description,mx,sum)
 mx2[1:6,1:4]
@@ -201,6 +202,7 @@ setname <- rownames(poscor)[i]
 gset <- genesets[[which(names(genesets) ==setname)]]
 mx <- rpm[which(rownames(rpm) %in% gset),]
 heatmap.2(as.matrix(mx),trace="none",scale="row",main=setname, margin=c(5,7))
+heatmap.2(cor(t(mx)),trace="none",scale="none",main=setname,margin=c(5,7))
 })
 
 ```
@@ -234,12 +236,13 @@ Heatmap of neg cor sets.
 z <- lapply(1:10, function(i) {
 setname <- rownames(anticor)[i]
 gset <- genesets[[which(names(genesets) ==setname)]]
-eset <- rownames(dat$GeneInfo[which(dat$GeneInfo$GeneSymbol %in% gset),])
-mx <- rpm[which(rownames(rpm) %in% eset),]
+mx <- rpm[which(rownames(rpm) %in% gset),]
 heatmap.2(as.matrix(mx),trace="none",scale="row",main=setname,margin=c(5,7))
+heatmap.2(cor(t(mx)),trace="none",scale="none",main=setname,margin=c(5,7))
 })
 
 ```
+
 Now visualise the test statistics found.
 
 ```{r,viz2}
