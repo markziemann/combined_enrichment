@@ -201,6 +201,7 @@ gset <- genesets[[which(names(genesets) ==setname)]]
 eset <- rownames(dat$GeneInfo[which(dat$GeneInfo$GeneSymbol %in% gset),])
 mx <- rpm[which(rownames(rpm) %in% eset),]
 heatmap.2(as.matrix(mx),trace="none",scale="row",main=setname, margin=c(5,7))
+heatmap.2(cor(t(mx)),trace="none",scale="none",main=setname,margin=c(5,7))
 })
 
 ```
@@ -238,6 +239,7 @@ gset <- genesets[[which(names(genesets) ==setname)]]
 eset <- rownames(dat$GeneInfo[which(dat$GeneInfo$GeneSymbol %in% gset),])
 mx <- rpm[which(rownames(rpm) %in% eset),]
 heatmap.2(as.matrix(mx),trace="none",scale="row",main=setname,margin=c(5,7))
+heatmap.2(cor(t(mx)),trace="none",scale="none",main=setname,margin=c(5,7))
 })
 
 ```
