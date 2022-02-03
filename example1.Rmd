@@ -8,7 +8,7 @@ output:
     toc_float: true
     code_folding: hide
     fig_width: 7
-    fig_height: 5
+    fig_height: 7
 theme: cosmo
 ---
 
@@ -35,6 +35,7 @@ library("clusterProfiler")
 library("mitch")
 library("kableExtra")
 library("eulerr")
+library("gplots")
 })
 
 dir.create("images")
@@ -67,6 +68,17 @@ gt$accession<-rownames(gt)
 
 # counts 
 x1<-x[,which(colnames(x) %in% s1$SRR_accession)]
+
+# calculate RPM
+rpm <- x1/colSums(x1) * 1000000
+rownames(rpm) <- sapply(strsplit(rownames(rpm),"\\."),"[[",1)
+
+# convert to gene symbols
+rpm2 <- rpm
+rpm2$symbol <- w$GeneInfo[match(rownames(rpm),rownames(w$GeneInfo)),"GeneSymbol"]
+rpm2 <- aggregate(. ~ symbol, rpm2, sum)
+rownames(rpm2) <- rpm2$symbol
+rpm2$symbol=NULL
 
 ```
 
@@ -142,6 +154,22 @@ make_volcano <- function(de,name) {
     points(sig$log2FoldChange,-log10(sig$padj),cex=0.5,pch=19,col="red")
 }
 
+
+make_volcano2 <- function(de,name,genes) {
+  myens <- rownames(w$GeneInfo)[match(genes,w$GeneInfo$GeneSymbol)]
+  sig <- de[which(rownames(de) %in% myens),]
+    N_SIG=nrow(subset(sig,padj<0.05))
+    N_UP=nrow(subset(sig,log2FoldChange>0 & padj<0.05))
+    N_DN=nrow(subset(sig,log2FoldChange<0 & padj<0.05))
+    DET=nrow(sig)
+    HEADER=paste(N_SIG,"@5%FDR,", N_UP, "up", N_DN, "dn", DET, "detected")
+    plot(de$log2FoldChange,-log10(de$padj),cex=0.5,pch=19,col="darkgray",
+        main=name, xlab="log2 FC", ylab="-log10 pval", xlim=c(-6,6))
+    mtext(HEADER)
+    grid()
+    points(sig$log2FoldChange,-log10(sig$padj),cex=0.5,pch=19,col="red")
+}
+
 maplot(de,name)
 make_volcano(de,name)
 
@@ -196,8 +224,7 @@ head(mcom$enrichment_result,10)  #%>% kbl() %>% kable_paper("hover", full_width 
 ```
 
 Let's look at the significant ones based on the combined analysis.
-There weren't many gene sets classe
-d as significant.
+There weren't many gene sets classed as significant.
 Let's see how many have a direction agnostic enrichment score which is larger in magnitude than the direction informed enrichment score.
 There are only 11 such sets which would benefit from such combined analysis.
 
@@ -230,10 +257,21 @@ List gene sets which are specific to each approach.
 ms <- c(ms_up,ms_dn)
 
 # in sep but not comb
-setdiff(ms,mc_up)
+sep <- setdiff(ms,mc_up)
+sep
+sep_up_only_df <- msep$enrichment_result[which(msep$enrichment_result$set %in% sep),]
+sep_up_only_df <- head(subset(sep_up_only_df,s.dist>0),10)
+sep_up_only_df %>% kbl(caption = "Upregulated sets identified in sep-DE only") %>% kable_paper("hover", full_width = F)
+
+sep_dn_only_df <- msep$enrichment_result[which(msep$enrichment_result$set %in% sep),]
+sep_dn_only_df <- head(subset(sep_dn_only_df,s.dist<0),10)
+sep_dn_only_df %>% kbl(caption = "Downregulated sets identified in sep-DE only") %>% kable_paper("hover", full_width = F)
 
 # in comb but not sep
-setdiff(mc_up,ms)
+comb <- setdiff(mc_up,ms)
+comb
+comb_only_df <- mcom$enrichment_result[which(mcom$enrichment_result$set %in% comb),]
+comb_only_df %>% kbl(caption = "Dysregulated sets identified in all-DE only") %>% kable_paper("hover", full_width = F)
 
 # intersection
 intersect(mc_up,ms)
@@ -256,6 +294,76 @@ length(mc_up)/length(all)
 
 ```
 
+## Now use heatmap to visualise gene set regulation
+
+```{r,heatmaps}
+
+comb_only_df
+lapply(1:nrow(comb_only_df),function(i) {
+  myset <- comb_only_df$set[i]
+  genes <- genesets[[which(names(genesets) == myset)]]
+  mymx <- rpm2[which(rownames(rpm2) %in% genes),]
+  mymx2 <-  mymx / rowMeans(mymx)
+  mymx2 <- mymx2[which(!is.na(mymx2[,1])),]
+  heatmap.2(as.matrix(mymx2),main=myset,trace="none",scale="row",margin=c(6,12),Colv="none",dendrogram="row",cexCol=0.8,cexRow=0.5)
+  make_volcano2(de,myset,genes)
+})
+
+```
+
+## FCS overlap between sep and combined shown as volcano
+
+```{r,sepcom_volcano_fcs1}
+
+msep_res <- msep$enrichment_result
+msep_sig <- subset(msep_res,p.adjustANOVA<0.05)
+mc_up_res <- msep_res[which(msep_res$set %in% mc_up),]
+
+plot(msep_res$s.dist,-log10(msep_res$pANOVA),
+  pch=19,cex=0.5,col="darkgray",
+  xlab="s distance (sep)", ylab="-log10(p) (sep)")
+
+fdrline <- msep_res[tail(which(msep_res$p.adjustANOVA<0.05),1),"pANOVA"]
+
+abline(h=-log10(fdrline),lty=2,lwd=2,col="black")
+
+#points(msep_sig$s.dist,-log10(msep_sig$pANOVA),
+#  pch=19,cex=0.5,col="red")
+
+points(mc_up_res$s.dist,-log10(mc_up_res$pANOVA),
+  cex=0.7,col="blue")
+
+mtext("blue: comb FDR<0.05")
+
+```
+
+```{r,sepcom_volcano_fcs2}
+
+mcom_res <- mcom$enrichment_result
+
+mcom_sig <- subset(mcom_res,p.adjustANOVA<0.05 & s.dist > 0)
+
+ms_res <- mcom_res[which(mcom_res$set %in% ms),]
+
+plot(mcom_res$s.dist,-log10(mcom_res$pANOVA),
+  pch=19,cex=0.5,col="darkgray",
+  xlab="s distance (com)", ylab="-log10(p) (com)")
+
+fdrline <- mcom_res[tail(which(mcom_res$p.adjustANOVA<0.05),1),"pANOVA"]
+
+abline(h=-log10(fdrline),lty=2,lwd=2,col="black")
+
+#points(mcom_sig$s.dist,-log10(mcom_sig$pANOVA),
+#  pch=19,cex=0.5,col="blue")
+
+points(ms_res$s.dist,-log10(ms_res$pANOVA),
+  pch=1,cex=0.7,col="red")
+
+mtext("red: sep FDR<0.05")
+
+```
+
+
 ## ORA with clusterprofiler
 
 Clusterprofiler uses a hypergeometric test.
@@ -274,14 +382,17 @@ de_dn <- unique(gt[which(rownames(gt) %in% de_dn),1])
 de_bg <- rownames(de)
 de_bg <- unique(gt[which(rownames(gt) %in% de_bg),1])
 
-o_up <- as.data.frame(enricher(gene = de_up, universe = de_bg,  maxGSSize = 5000, TERM2GENE = genesets2, pAdjustMethod="fdr"))
-o_up <- rownames(subset(o_up, p.adjust < 0.05))
+o_up_res <- as.data.frame(enricher(gene = de_up, universe = de_bg,  maxGSSize = 5000, TERM2GENE = genesets2, 
+  pAdjustMethod="fdr", pvalueCutoff = 1, qvalueCutoff = 1 ))
+o_up <- rownames(subset(o_up_res, p.adjust < 0.05))
        
-o_dn <- as.data.frame(enricher(gene = de_dn, universe = de_bg,  maxGSSize = 5000, TERM2GENE = genesets2, pAdjustMethod="fdr"))
-o_dn <- rownames(subset(o_dn, p.adjust < 0.05))
+o_dn_res <- as.data.frame(enricher(gene = de_dn, universe = de_bg,  maxGSSize = 5000, TERM2GENE = genesets2, 
+  pAdjustMethod="fdr", pvalueCutoff = 1, qvalueCutoff = 1 ))
+o_dn <- rownames(subset(o_dn_res, p.adjust < 0.05))
 
-o_com <- as.data.frame(enricher(gene = union(de_up,de_dn), universe = de_bg,  maxGSSize = 5000, TERM2GENE = genesets2, pAdjustMethod="fdr"))
-o_com <- rownames(subset(o_com, p.adjust < 0.05))
+o_com_res <- as.data.frame(enricher(gene = union(de_up,de_dn), universe = de_bg,  maxGSSize = 5000, TERM2GENE = genesets2, 
+  pAdjustMethod="fdr",  pvalueCutoff = 1, qvalueCutoff = 1  ))
+o_com <- rownames(subset(o_com_res, p.adjust < 0.05))
 
 length(o_up)
 length(o_dn)
@@ -324,6 +435,64 @@ setdiff(o_com,o_sep)
 
 # intersection
 intersect(mc_up,ms)
+
+```
+
+## Overlap between sep and combined shown as volcano
+
+```{r,sepcom_volcano_ora1}
+
+o_up_res$er <- sapply(o_up_res$GeneRatio , function(x) eval(parse(text=x))) / 
+  sapply(o_up_res$BgRatio , function(x) eval(parse(text=x)))
+o_up_res <- subset(o_up_res,er>1)
+
+o_dn_res$er <- sapply(o_dn_res$GeneRatio , function(x) eval(parse(text=x))) / 
+  sapply(o_dn_res$BgRatio , function(x) eval(parse(text=x))) 
+o_dn_res <- subset(o_dn_res,er>1)
+o_dn_res$er <- o_dn_res$er  * -1
+o_sep_res <- rbind(o_up_res,o_dn_res)
+o_sep_res <- o_sep_res[order(o_sep_res$pvalue),]
+o_sep_sig <- subset(o_sep_res, p.adjust < 0.05)
+
+o_sep_com <-  o_sep_res[which(o_sep_res$ID %in% o_com),]
+o_sep_com <- o_sep_com[which(!duplicated(o_sep_com$ID)),]
+
+plot(o_sep_res$er,-log10(o_sep_res$pvalue),
+  pch=19,cex=0.5,col="darkgray",
+  xlab="enrichment ratio (sep)", ylab="-log10(p) (sep)")
+
+fdrline <- o_sep_res[tail(which(o_sep_res$p.adjust<0.05),1),"pvalue"]
+
+abline(h=-log10(fdrline),lty=2,lwd=2,col="black")
+
+#points(o_sep_sig$er,-log10(o_sep_sig$pvalue),
+#  pch=19,cex=0.5,col="red")
+
+points(o_sep_com$er,-log10(o_sep_com$pvalue),
+  ,cex=0.7,col="blue")
+
+mtext("blue: comb FDR<0.05")
+
+```
+
+```{r,sepcom_volcano_ora2}
+
+o_com_res$er <- sapply(o_com_res$GeneRatio , function(x) eval(parse(text=x))) /
+  sapply(o_com_res$BgRatio , function(x) eval(parse(text=x)))
+
+o_com_sep <- o_com_res[which(o_com_res$ID %in% o_sep_sig$ID),]
+
+plot(o_com_res$er,-log10(o_com_res$pvalue),
+  pch=19,cex=0.5,col="darkgray",
+  xlab="enrichment ratio (com)", ylab="-log10(p) (com)")
+
+fdrline <- o_com_res[tail(which(o_com_res$p.adjust<0.05),1),"pvalue"]
+abline(h=-log10(fdrline),lty=2,lwd=2,col="black")
+
+points(o_com_sep$er,-log10(o_com_sep$pvalue),
+  ,cex=0.7,col="red")
+
+mtext("red: sep FDR<0.05")
 
 ```
 

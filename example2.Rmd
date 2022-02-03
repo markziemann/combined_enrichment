@@ -61,6 +61,17 @@ gt$accession<-rownames(gt)
 # counts 
 x1<-x[,which(colnames(x) %in% samplesheet$SRR_accession)]
 
+# calculate RPM
+rpm <- x1/colSums(x1) * 1000000
+rownames(rpm) <- sapply(strsplit(rownames(rpm),"\\."),"[[",1)
+
+# convert to gene symbols
+rpm2 <- rpm
+rpm2$symbol <- w$GeneInfo[match(rownames(rpm),rownames(w$GeneInfo)),"GeneSymbol"]
+rpm2 <- aggregate(. ~ symbol, rpm2, sum)
+rownames(rpm2) <- rpm2$symbol
+rpm2$symbol=NULL
+
 ```
 
 Here show the number of genes in the annotation set, and those detected above the detection threshold.
@@ -127,6 +138,21 @@ make_volcano <- function(de,name) {
     N_UP=nrow(subset(sig,log2FoldChange>0))
     N_DN=nrow(subset(sig,log2FoldChange<0))
     DET=nrow(de)
+    HEADER=paste(N_SIG,"@5%FDR,", N_UP, "up", N_DN, "dn", DET, "detected")
+    plot(de$log2FoldChange,-log10(de$padj),cex=0.5,pch=19,col="darkgray",
+        main=name, xlab="log2 FC", ylab="-log10 pval", xlim=c(-6,6))
+    mtext(HEADER)
+    grid()
+    points(sig$log2FoldChange,-log10(sig$padj),cex=0.5,pch=19,col="red")
+}
+
+make_volcano2 <- function(de,name,genes) {
+  myens <- rownames(w$GeneInfo)[match(genes,w$GeneInfo$GeneSymbol)]
+  sig <- de[which(rownames(de) %in% myens),]
+    N_SIG=nrow(subset(sig,padj<0.05))
+    N_UP=nrow(subset(sig,log2FoldChange>0 & padj<0.05))
+    N_DN=nrow(subset(sig,log2FoldChange<0 & padj<0.05))
+    DET=nrow(sig)
     HEADER=paste(N_SIG,"@5%FDR,", N_UP, "up", N_DN, "dn", DET, "detected")
     plot(de$log2FoldChange,-log10(de$padj),cex=0.5,pch=19,col="darkgray",
         main=name, xlab="log2 FC", ylab="-log10 pval", xlim=c(-6,6))
@@ -225,10 +251,21 @@ List gene sets which are specific to each approach.
 ms <- c(ms_up,ms_dn)
 
 # in sep but not comb
-setdiff(ms,mc_up)
+sep <- setdiff(ms,mc_up)
+sep
+sep_up_only_df <- msep$enrichment_result[which(msep$enrichment_result$set %in% sep),]
+sep_up_only_df <- head(subset(sep_up_only_df,s.dist>0),10)
+sep_up_only_df %>% kbl(caption = "Upregulated sets identified in sep-DE only") %>% kable_paper("hover", full_width = F)
+
+sep_dn_only_df <- msep$enrichment_result[which(msep$enrichment_result$set %in% sep),]
+sep_dn_only_df <- head(subset(sep_dn_only_df,s.dist<0),10)
+sep_dn_only_df %>% kbl(caption = "Downregulated sets identified in sep-DE only") %>% kable_paper("hover", full_width = F)
 
 # in comb but not sep
-setdiff(mc_up,ms)
+comb <- setdiff(mc_up,ms)
+comb
+comb_only_df <- mcom$enrichment_result[which(mcom$enrichment_result$set %in% comb),]
+comb_only_df %>% kbl(caption = "Dysregulated sets identified in all-DE only") %>% kable_paper("hover", full_width = F)
 
 # intersection
 intersect(mc_up,ms)
@@ -248,6 +285,24 @@ message("Sensitivity: separate only")
 
 message("Sensitivity: combined only")
 length(mc_up)/length(all)
+
+```
+
+## Now use heatmap to visualise gene set regulation
+
+```{r,heatmaps,fig.height=7,fig.width=7}
+
+comb_only_df
+lapply(1:nrow(comb_only_df),function(i) {
+  message(i)
+  myset <- comb_only_df$set[i]
+  genes <- genesets[[which(names(genesets) == myset)]]
+  mymx <- rpm2[which(rownames(rpm2) %in% genes),]
+  mymx2 <-  mymx / rowMeans(mymx)
+  mymx2 <- mymx2[which(!is.na(mymx2[,1])),]
+  heatmap.2(as.matrix(mymx2),main=myset,trace="none",scale="row",margin=c(6,12),Colv="none",dendrogram="row",cexCol=0.8,cexRow=0.5)
+  make_volcano2(de,myset,genes)
+})
 
 ```
 
