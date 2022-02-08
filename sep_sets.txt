@@ -1,0 +1,376 @@
+Diseases of DNA repair
+Homologous DNA Pairing and Strand Exchange
+Mitotic Prometaphase
+Resolution of D-loop Structures through Holliday Junction Intermediates
+Biological oxidations
+Resolution of D-Loop Structures
+Homology Directed Repair
+Defective HDR through Homologous Recombination (HRR) due to BRCA1 loss-of-function
+Defective HDR through Homologous Recombination (HRR) due to PALB2 loss of function
+Defective HDR through Homologous Recombination Repair (HRR) due to PALB2 loss of BRCA1 binding function
+Defective HDR through Homologous Recombination Repair (HRR) due to PALB2 loss of BRCA2/RAD51/RAD51C binding function
+Diseases of DNA Double-Strand Break Repair
+Presynaptic phase of homologous DNA pairing and strand exchange
+HDR through Homologous Recombination (HRR)
+Chromosome Maintenance
+Resolution of D-loop Structures through Synthesis-Dependent Strand Annealing (SDSA)
+HDR through Homologous Recombination (HRR) or Single Strand Annealing (SSA)
+Unwinding of DNA
+Activation of ATR in response to replication stress
+Phase II - Conjugation of compounds
+DNA Double-Strand Break Repair
+Cilium Assembly
+Deposition of new CENPA-containing nucleosomes at the centromere
+Nucleosome assembly
+DNA Repair
+HDR through Single Strand Annealing (SSA)
+Telomere C-strand (Lagging Strand) Synthesis
+Cell Cycle Checkpoints
+MyD88 deficiency (TLR2/4)
+Lagging Strand Synthesis
+Mitotic Spindle Checkpoint
+IRAK4 deficiency (TLR2/4)
+Activation of the pre-replicative complex
+Base Excision Repair
+Processive synthesis on the lagging strand
+Anchoring of the basal body to the plasma membrane
+AURKA Activation by TPX2
+Glutathione conjugation
+Extension of Telomeres
+Resolution of Sister Chromatid Cohesion
+Regulation of TLR by endogenous ligand
+Leading Strand Synthesis
+Polymerase switching
+Collagen chain trimerization
+Formation of Fibrin Clot (Clotting Cascade)
+Removal of the Flap Intermediate
+Recruitment of NuMA to mitotic centrosomes
+Polymerase switching on the C-strand of the telomere
+Resolution of Abasic Sites (AP sites)
+Loss of Nlp from mitotic centrosomes
+Loss of proteins required for interphase microtubule organization from the centrosome
+Meiotic recombination
+Centrosome maturation
+Recruitment of mitotic centrosome proteins and complexes
+Fanconi Anemia Pathway
+Telomere Maintenance
+G2/M DNA damage checkpoint
+Intraflagellar transport
+Base-Excision Repair, AP Site Formation
+Mismatch repair (MMR) directed by MSH2:MSH6 (MutSalpha)
+Mismatch repair (MMR) directed by MSH2:MSH3 (MutSbeta)
+Peroxisomal protein import
+Cleavage of the damaged pyrimidine
+Depyrimidination
+Recognition and association of DNA glycosylase with site containing an affected pyrimidine
+Mismatch Repair
+Phase I - Functionalization of compounds
+Processive synthesis on the C-strand of the telomere
+Processing of DNA double-strand break ends
+Organelle biogenesis and maintenance
+Post-translational modification: synthesis of GPI-anchored proteins
+Inactivation of APC/C via direct inhibition of the APC/C complex
+Inhibition of the proteolytic activity of APC/C required for the onset of anaphase by mitotic spindle checkpoint components
+Defective pyroptosis
+Carboxyterminal post-translational modifications of tubulin
+Ethanol oxidation
+Integrin cell surface interactions
+M Phase
+Regulation of PLK1 Activity at G2/M Transition
+Peroxisomal lipid metabolism
+Glyoxylate metabolism and glycine degradation
+Common Pathway of Fibrin Clot Formation
+Metabolism of vitamins and cofactors
+Post-chaperonin tubulin folding pathway
+Infectious disease
+SRP-dependent cotranslational protein targeting to membrane
+Axon guidance
+Cellular response to starvation
+Nervous system development
+L13a-mediated translational silencing of Ceruloplasmin expression
+GTP hydrolysis and joining of the 60S ribosomal subunit
+Developmental Biology
+Translation
+Cap-dependent Translation Initiation
+Eukaryotic Translation Initiation
+Regulation of expression of SLITs and ROBOs
+Signaling by ROBO receptors
+Diseases of signal transduction by growth factor receptors and second messengers
+Response of EIF2AK4 (GCN2) to amino acid deficiency
+Formation of a pool of free 40S subunits
+Metabolism of RNA
+Eukaryotic Translation Elongation
+Nonsense Mediated Decay (NMD) independent of the Exon Junction Complex (EJC)
+Nonsense Mediated Decay (NMD) enhanced by the Exon Junction Complex (EJC)
+Nonsense-Mediated Decay (NMD)
+Viral mRNA Translation
+Influenza Infection
+rRNA processing in the nucleus and cytosol
+Peptide chain elongation
+SARS-CoV Infections
+Major pathway of rRNA processing in the nucleolus and cytosol
+Eukaryotic Translation Termination
+Vesicle-mediated transport
+Signaling by Receptor Tyrosine Kinases
+Membrane Trafficking
+Selenocysteine synthesis
+Transport to the Golgi and subsequent modification
+PIP3 activates AKT signaling
+Ribosomal scanning and start codon recognition
+ER to Golgi Anterograde Transport
+Selenoamino acid metabolism
+Translation initiation complex formation
+Influenza Viral RNA Transcription and Replication
+Activation of the mRNA upon binding of the cap-binding complex and eIFs, and subsequent binding to 43S
+rRNA processing
+Intracellular signaling by second messengers
+Formation of the ternary complex, and subsequently, the 43S complex
+Signaling by NTRK1 (TRKA)
+SARS-CoV-2 Infection
+Autophagy
+Signaling by the B Cell Receptor (BCR)
+MAPK family signaling cascades
+TCR signaling
+RHO GTPase cycle
+Fc epsilon receptor (FCERI) signaling
+Macroautophagy
+RAF/MAP kinase cascade
+MyD88 cascade initiated on plasma membrane
+Toll Like Receptor 10 (TLR10) Cascade
+Toll Like Receptor 5 (TLR5) Cascade
+Downstream signaling events of B Cell Receptor (BCR)
+COPI-mediated anterograde transport
+Signaling by WNT
+Toll Like Receptor 3 (TLR3) Cascade
+Cytokine Signaling in Immune system
+ER Quality Control Compartment (ERQC)
+Hh mutants are degraded by ERAD
+Signaling by NTRKs
+MyD88 dependent cascade initiated on endosome
+TRAF6 mediated induction of NFkB and MAP kinases upon TLR7/8 or 9 activation
+Toll Like Receptor 7/8 (TLR7/8) Cascade
+Hh mutants abrogate ligand secretion
+Hedgehog ligand biogenesis
+MAPK1/MAPK3 signaling
+Signaling by Insulin receptor
+Toll Like Receptor 9 (TLR9) Cascade
+Defective CFTR causes cystic fibrosis
+MyD88-independent TLR4 cascade
+TRIF(TICAM1)-mediated TLR4 signaling
+Downstream TCR signaling
+Chromatin modifying enzymes
+Chromatin organization
+Degradation of beta-catenin by the destruction complex
+MAP kinase activation
+Activation of NF-kappaB in B cells
+PTEN Regulation
+Regulation of HMOX1 expression and activity
+Adaptive Immune System
+Insulin receptor recycling
+Interleukin-17 signaling
+RAC3 GTPase cycle
+trans-Golgi Network Vesicle Budding
+Interleukin-1 signaling
+Deubiquitination
+UCH proteinases
+COPII-mediated vesicle transport
+Cytoprotection by HMOX1
+Regulation of RUNX2 expression and activity
+RAC2 GTPase cycle
+Signaling by NOTCH
+ROS sensing by NFE2L2
+FCERI mediated NF-kB activation
+Degradation of AXIN
+Circadian Clock
+Potential therapeutics for SARS
+ABC transporter disorders
+ABC-family proteins mediated transport
+Regulation of PTEN stability and activity
+C-type lectin receptors (CLRs)
+Nuclear Events (kinase and transcription factor activation)
+TCF dependent signaling in response to WNT
+Negative regulation of MAPK pathway
+Regulation of mRNA stability by proteins that bind AU-rich elements
+Cellular response to chemical stress
+Interleukin-1 family signaling
+mRNA Splicing - Major Pathway
+Cargo concentration in the ER
+CLEC7A (Dectin-1) signaling
+Signaling by VEGF
+Dectin-1 mediated noncanonical NF-kB signaling
+NIK-->noncanonical NF-kB signaling
+Regulation of RUNX3 expression and activity
+TGF-beta receptor signaling activates SMADs
+RAC1 GTPase cycle
+mRNA Splicing
+MAPK6/MAPK4 signaling
+Ubiquitin-dependent degradation of Cyclin D
+RHOG GTPase cycle
+Degradation of GLI1 by the proteasome
+AUF1 (hnRNP D0) binds and destabilizes mRNA
+Degradation of GLI2 by the proteasome
+GLI3 is processed to GLI3R by the proteasome
+Transcriptional regulation by RUNX3
+Transport of inorganic cations/anions and amino acids/oligopeptides
+Lysosome Vesicle Biogenesis
+Degradation of DVL
+Heme signaling
+Intra-Golgi and retrograde Golgi-to-ER traffic
+PCP/CE pathway
+Regulation of activated PAK-2p34 by proteasome mediated degradation
+FBXL7 down-regulates AURKA during mitotic entry and in early mitosis
+Signaling by TGF-beta Receptor Complex
+Golgi Associated Vesicle Biogenesis
+Ub-specific processing proteases
+Amino acids regulate mTORC1
+Processing of Capped Intron-Containing Pre-mRNA
+PI3K/AKT Signaling in Cancer
+ROS and RNS production in phagocytes
+Signalling to ERKs
+Toll-like Receptor Cascades
+Signaling by EGFR
+Transcriptional regulation by RUNX2
+Cellular response to hypoxia
+Autodegradation of the E3 ubiquitin ligase COP1
+Negative regulation of NOTCH4 signaling
+Amino acid transport across the plasma membrane
+VEGFA-VEGFR2 Pathway
+Oxygen-dependent proline hydroxylation of Hypoxia-inducible Factor Alpha
+Transcriptional regulation by RUNX1
+Uptake and actions of bacterial toxins
+RUNX1 regulates transcription of genes involved in differentiation of HSCs
+Regulation of RAS by GAPs
+Signaling by NOTCH4
+Regulation of TP53 Activity through Acetylation
+PI Metabolism
+Downregulation of TGF-beta receptor signaling
+Vif-mediated degradation of APOBEC3G
+Regulation of ornithine decarboxylase (ODC)
+SCF-beta-TrCP mediated degradation of Emi1
+Clathrin-mediated endocytosis
+Class I MHC mediated antigen processing & presentation
+Hedgehog 'on' state
+AKT phosphorylates targets in the cytosol
+Regulation of Apoptosis
+Beta-catenin independent WNT signaling
+HDMs demethylate histones
+Host Interactions of HIV factors
+MyD88:MAL(TIRAP) cascade initiated on plasma membrane
+Toll Like Receptor 2 (TLR2) Cascade
+Toll Like Receptor TLR1:TLR2 Cascade
+Toll Like Receptor TLR6:TLR2 Cascade
+Cross-presentation of soluble exogenous antigens (endosomes)
+RHOV GTPase cycle
+Regulation of actin dynamics for phagocytic cup formation
+MAP3K8 (TPL2)-dependent MAPK1/3 activation
+Vpu mediated degradation of CD4
+Negative regulation of the PI3K/AKT network
+MAPK targets/ Nuclear events mediated by MAP kinases
+Infection with Mycobacterium tuberculosis
+TBC/RABGAPs
+HIV Infection
+Toll Like Receptor 4 (TLR4) Cascade
+Fcgamma receptor (FCGR) dependent phagocytosis
+EPH-Ephrin signaling
+Signaling by EGFR in Cancer
+Nuclear Receptor transcription pathway
+Signaling by NOTCH1
+RHOQ GTPase cycle
+Response of Mtb to phagocytosis
+Retrograde transport at the Trans-Golgi-Network
+RHOBTB GTPase Cycle
+TNFR2 non-canonical NF-kB pathway
+rRNA modification in the nucleus and cytosol
+ESR-mediated signaling
+The role of GTSE1 in G2/M progression after G2 checkpoint
+SARS-CoV-1 Infection
+Disorders of transmembrane transporters
+Folding of actin by CCT/TriC
+Stabilization of p53
+Cell-extracellular matrix interactions
+Uptake and function of anthrax toxins
+NGF-stimulated transcription
+Response of EIF2AK1 (HRI) to heme deficiency
+Metabolism of polyamines
+Signaling by FGFR4
+EGFR downregulation
+Ion channel transport
+Extra-nuclear estrogen signaling
+Cargo recognition for clathrin-mediated endocytosis
+TP53 Regulates Metabolic Genes
+Signaling by TGFB family members
+Apoptosis
+Antigen Presentation: Folding, assembly and peptide loading of class I MHC
+Signaling by Hedgehog
+Negative regulation of FGFR1 signaling
+Constitutive Signaling by Ligand-Responsive EGFR Cancer Variants
+Signaling by Ligand-Responsive EGFR Variants in Cancer
+CDT1 association with the CDC6:ORC:origin complex
+Signaling by FGFR3
+RND2 GTPase cycle
+Negative regulation of FGFR4 signaling
+Antigen processing-Cross presentation
+Ubiquitin Mediated Degradation of Phosphorylated Cdc25A
+p53-Independent DNA Damage Response
+p53-Independent G1/S DNA damage checkpoint
+PI5P, PP2A and IER3 Regulate PI3K/AKT Signaling
+p53-Dependent G1 DNA Damage Response
+p53-Dependent G1/S DNA damage checkpoint
+Cytosolic sensors of pathogen-associated DNA
+Regulation of signaling by CBL
+Scavenging by Class A Receptors
+RHOBTB2 GTPase cycle
+Attenuation phase
+Intra-Golgi traffic
+Antigen processing: Ubiquitination & Proteasome degradation
+PERK regulates gene expression
+RHOC GTPase cycle
+Nephrin family interactions
+RIP-mediated NFkB activation via ZBP1
+RUNX3 regulates p14-ARF
+SCF(Skp2)-mediated degradation of p27/p21
+FCGR3A-mediated phagocytosis
+Leishmania phagocytosis
+Parasite infection
+Activated NOTCH1 Transmits Signal to the Nucleus
+RHOA GTPase cycle
+Suppression of phagosomal maturation
+RHOJ GTPase cycle
+RHOB GTPase cycle
+Insulin receptor signalling cascade
+Cellular response to heat stress
+ATF6 (ATF6-alpha) activates chaperone genes
+ERK/MAPK targets
+FOXO-mediated transcription
+Signaling by FGFR1
+Sphingolipid metabolism
+RET signaling
+CDC42 GTPase cycle
+CD28 co-stimulation
+TRAF6 mediated NF-kB activation
+Signaling by FGFR
+ATF6 (ATF6-alpha) activates chaperones
+Incretin synthesis, secretion, and inactivation
+TGF-beta receptor signaling in EMT (epithelial to mesenchymal transition)
+NF-kB is activated and signals survival
+Asymmetric localization of PCP proteins
+MET activates RAS signaling
+ZBP1(DAI) mediated induction of type I IFNs
+Negative regulation of FGFR3 signaling
+Signaling by MET
+Negative regulation of MET activity
+FLT3 Signaling
+Death Receptor Signalling
+CD28 dependent PI3K/Akt signaling
+LDL clearance
+p75 NTR receptor-mediated signalling
+ERKs are inactivated
+Constitutive Signaling by AKT1 E17K in Cancer
+Signaling by ALK fusions and activated point mutants
+Signaling by ALK in cancer
+HSF1-dependent transactivation
+Semaphorin interactions
+Constitutive Signaling by EGFRvIII
+Signaling by EGFRvIII in Cancer
+Regulation of PTEN gene transcription
+Spry regulation of FGF signaling
