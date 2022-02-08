@@ -154,7 +154,6 @@ make_volcano <- function(de,name) {
     points(sig$log2FoldChange,-log10(sig$padj),cex=0.5,pch=19,col="red")
 }
 
-
 make_volcano2 <- function(de,name,genes) {
   myens <- rownames(w$GeneInfo)[match(genes,w$GeneInfo$GeneSymbol)]
   sig <- de[which(rownames(de) %in% myens),]
@@ -232,7 +231,7 @@ Euler diagram of the significant pathways found with each approach.
 
 ```{r,mitch_euler1}
 
-l0 <- list("sep up"=ms_up,"sep dn"=ms_dn,"comb up"=mc_up,"comb dn"=mc_dn)
+l0 <- list("sep-DE up"=ms_up,"sep-DE dn"=ms_dn,"all-DE up"=mc_up,"all-DE dn"=mc_dn)
 par(cex.main=0.5)
 plot(euler(l0),quantities = TRUE, edges = "gray", main="FCS: combined vs separated")
 
@@ -273,6 +272,9 @@ comb
 comb_only_df <- mcom$enrichment_result[which(mcom$enrichment_result$set %in% comb),]
 comb_only_df %>% kbl(caption = "Dysregulated sets identified in all-DE only") %>% kable_paper("hover", full_width = F)
 
+writeLines(text=sep,con="sep_sets.txt")
+writeLines(text=comb,con="comb_sets.txt")
+
 # intersection
 intersect(mc_up,ms)
 
@@ -305,7 +307,8 @@ lapply(1:nrow(comb_only_df),function(i) {
   mymx <- rpm2[which(rownames(rpm2) %in% genes),]
   mymx2 <-  mymx / rowMeans(mymx)
   mymx2 <- mymx2[which(!is.na(mymx2[,1])),]
-  heatmap.2(as.matrix(mymx2),main=myset,trace="none",scale="row",margin=c(6,12),Colv="none",dendrogram="row",cexCol=0.8,cexRow=0.5)
+  colfunc <- colorRampPalette(c("blue", "white", "red"))
+  heatmap.2(as.matrix(mymx2),main=myset,trace="none", col=colfunc(25), scale="row",margin=c(6,12),Colv="none",dendrogram="row",cexCol=0.8,cexRow=0.5)
   make_volcano2(de,myset,genes)
 })
 
