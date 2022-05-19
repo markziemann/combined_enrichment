@@ -21,9 +21,9 @@ This script is designed to fetch GTEXv8 RNA-seq expression data in order to asse
 ```{r,begin0}
 
 suppressPackageStartupMessages({
-  library("kableExtra")
+#  library("kableExtra")
   library("beeswarm")
-  library("getDEE2")
+#  library("getDEE2")
   library("mitch")
   library("gplots")
   library("Hmisc")
@@ -46,6 +46,8 @@ if (! file.exists("GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_reads.gct.gz")
   tmp <- tmp[3:length(tmp)]
   writeLines(tmp,con="GTEx_data.tsv")
 }
+
+# import data
 mx <- read.table("GTEx_data.tsv",header=TRUE,row.names=1)
 mx[1:6,1:4]
 dim(mx)
@@ -113,7 +115,7 @@ res <- mclapply(1:length(genesets), function(i){
   gs <- genesets[[i]]
   len <- length(gs)
   x <- rpm[which(rownames(rpm) %in% gs),]
-  if(nrow(x)>=10) {
+  if(nrow(x)>=5) {
     res <- rcorr(as.matrix(t(x)),type="spearman")
     res <- flattenCorrMatrix(res$r, res$P)
     # randomly select gene ids as a comparison
@@ -126,7 +128,7 @@ res <- mclapply(1:length(genesets), function(i){
     result <- list("inset"=res$cor, "rand"=res2$cor,"setname"=setname)
     return(result) 
   }
-}, mc.cores=16)
+}, mc.cores=round(detectCores()*3/4))
 
 ```
 
@@ -137,17 +139,19 @@ looks like some empty results. Let's get rid of those now.
 str(head(res))
 res <- res[which(lapply(res,length)>0)]
 str(head(res))
+length(res)
 
 ```
 
 We can visualise the spearman correlation coefficients here.
 
-```{r,viz1}
+```{r,viz1,fig.height=5,fig.width=5}
 
 z <- lapply(1:6, function(i){
-setname <- res[[i]]$setname
-boxplot(res[[i]][1:2],col="white",ylab="Spearman rho",main=setname)
-beeswarm(res[[i]][1:2],add=TRUE,pch=19)
+  setname <- res[[i]]$setname
+  boxplot(res[[i]][1:2],col="white",ylab="Spearman rho",main=setname)
+  beeswarm(res[[i]][1:2],add=TRUE,pch=19,cex=1)
+#  vioplot(res[[i]][1:2],col="white",ylab="Spearman rho",main=setname)
 })
 
 ```
@@ -157,10 +161,10 @@ We can run a t-test to quantify the difference in distributions.
 ```{r,test1}
 
 res2 <- lapply(1:length(res), function(i) {
-inset <- res[[i]]$inset
-rand <- res[[i]]$rand
-tt <- t.test(x=inset,y=rand)
-return(c("stat"=tt$statistic,"pvalue"=tt$p.value))
+  inset <- res[[i]]$inset
+  rand <- res[[i]]$rand
+  tt <- t.test(x=inset,y=rand)
+  return(c("stat"=tt$statistic,"pvalue"=tt$p.value))
 })
 
 res2 <- do.call(rbind,res2)
@@ -170,26 +174,37 @@ summary(res2)
 
 ```
 
+output the results
+
+```{r,}
+
+write.table(res2,file="cor.tsv",quote=FALSE,sep="\t")
+
+```
+
 Now we can look at the positive and negatively correlated gene sets.
 
 ```{r,poscor}
 
 poscor <- head(res2[order(-res2[,1]),],10) 
-poscor %>% kbl(caption="most correlated gene sets") %>% kable_paper("hover", full_width = F)
+poscor #%>% kbl(caption="most correlated gene sets") %>% kable_paper("hover", full_width = F)
 poscor_res <- res[which(sapply(res,"[[",3) %in% rownames(poscor))]
 
 ```
 
 Vioplot of positively correlated sets.
 
-```{r,posvio}
+```{r,posvio,fig.height=4,fig.width=4}
 
 z <- lapply(1:length(poscor_res), function(i){
-setname <- poscor_res[[i]]$setname
-gset <- genesets[[which(names(genesets) ==setname)]]
-n <- length(which(gset %in% rownames(rpm)))
-vioplot(poscor_res[[i]][1:2] , ylab="Spearman rho",main=setname  )
-mtext(paste("n=",n))
+  setname <- poscor_res[[i]]$setname
+  gset <- genesets[[which(names(genesets) ==setname)]]
+  n <- length(which(gset %in% rownames(rpm)))
+  boxplot(poscor_res[[i]][1:2],col="white",ylab="Spearman rho",main=setname)
+  beeswarm(poscor_res[[i]][1:2],add=TRUE,pch=19,cex=1)
+  mtext(paste("n=",n))
+  vioplot(poscor_res[[i]][1:2] , ylab="Spearman rho",main=setname  )
+  mtext(paste("n=",n))
 })
 
 ```
@@ -198,11 +213,11 @@ Heatmap of pos cor sets.
 
 ```{r,posheat}
 z <- lapply(1:10, function(i) {
-setname <- rownames(poscor)[i]
-gset <- genesets[[which(names(genesets) ==setname)]]
-mx <- rpm[which(rownames(rpm) %in% gset),]
-heatmap.2(as.matrix(mx),trace="none",scale="row",main=setname, margin=c(5,7))
-heatmap.2(cor(t(mx)),trace="none",scale="none",main=setname,margin=c(5,7))
+  setname <- rownames(poscor)[i]
+  gset <- genesets[[which(names(genesets) ==setname)]]
+  mx <- rpm[which(rownames(rpm) %in% gset),]
+  heatmap.2(as.matrix(mx),trace="none",scale="row",main=setname, margin=c(5,7))
+  heatmap.2(cor(t(mx)),trace="none",scale="none",main=setname,margin=c(5,7))
 })
 
 ```
@@ -212,7 +227,7 @@ Now focus on negatively correlated sets.
 ```{r,anticor}
 
 anticor <- head(res2[order(res2[,1]),],10)
-anticor %>% kbl(caption="most anti-correlated gene sets") %>% kable_paper("hover", full_width = F)
+anticor #%>% kbl(caption="most anti-correlated gene sets") %>% kable_paper("hover", full_width = F)
 anticor_res <- res[which(sapply(res,"[[",3) %in% rownames(anticor))]
 
 ```
@@ -220,11 +235,14 @@ anticor_res <- res[which(sapply(res,"[[",3) %in% rownames(anticor))]
 ```{r,negvio}
 
 z <- lapply(1:length(anticor_res), function(i){
-setname <- anticor_res[[i]]$setname
-gset <- genesets[[which(names(genesets) ==setname)]]
-n <- length(which(gset %in% rownames(rpm)))
-vioplot(anticor_res[[i]][1:2] , ylab="Spearman rho",main=setname  )
-mtext(paste("n=",n))
+  setname <- anticor_res[[i]]$setname
+  gset <- genesets[[which(names(genesets) ==setname)]]
+  n <- length(which(gset %in% rownames(rpm)))
+  boxplot(negcor_res[[i]][1:2],col="white",ylab="Spearman rho",main=setname)
+  beeswarm(negcor_res[[i]][1:2],add=TRUE,pch=19,cex=1)
+  mtext(paste("n=",n))
+  vioplot(anticor_res[[i]][1:2] , ylab="Spearman rho",main=setname  )
+  mtext(paste("n=",n))
 })
 
 ```
@@ -245,7 +263,9 @@ heatmap.2(cor(t(mx)),trace="none",scale="none",main=setname,margin=c(5,7))
 
 Now visualise the test statistics found.
 
-```{r,viz2}
+```{r,viz2,fig.width=6,fig.height=6}
+
+res2 <- read.table("cor.tsv",sep="\t")
 
 par(mfrow=c(2,1))
 hist(res2[,"stat.t"],breaks=100,main="",xlab="test statistic")
@@ -256,6 +276,10 @@ hist(res2[,"stat.t"],xlim=c(-50,50),breaks=100,main="",xlab="test statistic")
 boxplot(res2[,"stat.t"],ylim=c(-50,50),horizontal=TRUE)
 
 par(mfrow=c(1,1))
+
+```
+
+```{r,viz3,fig.width=4,fig.height=4}
 
 pos <- length( which(res2[,1]>0 & res2[,2] < 0.05) )
 neg <- length( which(res2[,1]<0 & res2[,2] < 0.05) )
