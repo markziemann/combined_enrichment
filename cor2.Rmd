@@ -48,7 +48,7 @@ if (! file.exists("GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_reads.gct.gz")
 }
 
 # import data
-mx <- read.table("GTEx_data.tsv",header=TRUE,row.names=1)
+mx <- read.table("GTEx_data2.tsv",header=TRUE,row.names=1)
 mx[1:6,1:4]
 dim(mx)
 
@@ -263,17 +263,23 @@ heatmap.2(cor(t(mx)),trace="none",scale="none",main=setname,margin=c(5,7))
 
 Now visualise the test statistics found.
 
-```{r,viz2,fig.width=6,fig.height=6}
+```{r,viz2,fig.width=5,fig.height=5}
 
 res2 <- read.table("cor.tsv",sep="\t")
 
 par(mfrow=c(2,1))
 hist(res2[,"stat.t"],breaks=100,main="",xlab="test statistic")
 boxplot(res2[,"stat.t"],horizontal=TRUE)
-
-
 hist(res2[,"stat.t"],xlim=c(-50,50),breaks=100,main="",xlab="test statistic")
 boxplot(res2[,"stat.t"],ylim=c(-50,50),horizontal=TRUE)
+
+pdf("hist.pdf",height=5,width=5)
+par(mfrow=c(2,1))
+hist(res2[,"stat.t"],breaks=100,main="",xlab="test statistic")
+boxplot(res2[,"stat.t"],horizontal=TRUE)
+hist(res2[,"stat.t"],xlim=c(-50,50),breaks=100,main="",xlab="test statistic")
+boxplot(res2[,"stat.t"],ylim=c(-50,50),horizontal=TRUE)
+dev.off()
 
 par(mfrow=c(1,1))
 
@@ -287,6 +293,11 @@ none <- length( which(res2[,2] > 0.05) )
 bars <- c("Pos"=pos,"None"=none,"Neg"=neg)
 barplot(bars,ylab="no. gene sets with correlated expression",ylim=c(0,max(bars)*1.3))
 text(((1:length(bars))-0.5)*1.25,bars+50,labels=bars)
+
+pdf("bars.pdf",height=4,width=4)
+barplot(bars,ylab="no. gene sets with correlated expression",ylim=c(0,max(bars)*1.3))
+text(((1:length(bars))-0.5)*1.25,bars+50,labels=bars)
+dev.off()
 
 ```
 
