@@ -149,9 +149,13 @@ We can visualise the spearman correlation coefficients here.
 
 z <- lapply(1:6, function(i){
   setname <- res[[i]]$setname
-  boxplot(res[[i]][1:2],col="white",ylab="Spearman rho",main=setname)
-  beeswarm(res[[i]][1:2],add=TRUE,pch=19,cex=1)
-#  vioplot(res[[i]][1:2],col="white",ylab="Spearman rho",main=setname)
+  data <- res[[i]][1:2]
+  vioplot(data,col="white",ylab="Spearman rho",main=setname)
+
+  data$inset <- sample(x=data$inset,size=1000,replace=TRUE)
+  data$rand <- sample(x=data$rand,size=1000,replace=TRUE)
+  boxplot(data,col="white",ylab="Spearman rho",main=setname)
+  beeswarm(data,add=TRUE,pch=19,cex=0.8)
 })
 
 ```
@@ -200,10 +204,17 @@ z <- lapply(1:length(poscor_res), function(i){
   setname <- poscor_res[[i]]$setname
   gset <- genesets[[which(names(genesets) ==setname)]]
   n <- length(which(gset %in% rownames(rpm)))
-  boxplot(poscor_res[[i]][1:2],col="white",ylab="Spearman rho",main=setname)
-  beeswarm(poscor_res[[i]][1:2],add=TRUE,pch=19,cex=1)
+  data <- poscor_res[[i]][1:2]
+
+  vioplot(data , ylab="Spearman rho",main=setname  )
+  grid()
   mtext(paste("n=",n))
-  vioplot(poscor_res[[i]][1:2] , ylab="Spearman rho",main=setname  )
+
+  data$inset <- sample(x=data$inset,size=1000,replace=TRUE)
+  data$rand <- sample(x=data$rand,size=1000,replace=TRUE)
+  boxplot(data,col="white",ylab="Spearman rho",main=setname)
+  grid()
+  beeswarm(data,add=TRUE,pch=19,cex=0.8)
   mtext(paste("n=",n))
 })
 
@@ -235,13 +246,20 @@ anticor_res <- res[which(sapply(res,"[[",3) %in% rownames(anticor))]
 ```{r,negvio}
 
 z <- lapply(1:length(anticor_res), function(i){
-  setname <- anticor_res[[i]]$setname
+  setname <- poscor_res[[i]]$setname
   gset <- genesets[[which(names(genesets) ==setname)]]
   n <- length(which(gset %in% rownames(rpm)))
-  boxplot(negcor_res[[i]][1:2],col="white",ylab="Spearman rho",main=setname)
-  beeswarm(negcor_res[[i]][1:2],add=TRUE,pch=19,cex=1)
+  data <- poscor_res[[i]][1:2]
+
+  vioplot(data , ylab="Spearman rho",main=setname  )
+  grid()
   mtext(paste("n=",n))
-  vioplot(anticor_res[[i]][1:2] , ylab="Spearman rho",main=setname  )
+
+  data$inset <- sample(x=data$inset,size=1000,replace=TRUE)
+  data$rand <- sample(x=data$rand,size=1000,replace=TRUE)
+  boxplot(data,col="white",ylab="Spearman rho",main=setname)
+  grid()
+  beeswarm(data,add=TRUE,pch=19,cex=0.8)
   mtext(paste("n=",n))
 })
 
