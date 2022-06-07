@@ -235,6 +235,9 @@ l0 <- list("sep-DE up"=ms_up,"sep-DE dn"=ms_dn,"all-DE up"=mc_up,"all-DE dn"=mc_
 par(cex.main=0.5)
 plot(euler(l0),quantities = TRUE, edges = "gray", main="FCS: combined vs separated")
 
+pdf("euler.pdf")
+plot(euler(l0),quantities = TRUE, edges = "gray", main="FCS: combined vs separated")
+dev.off()
 
 length(ms_up)
 length(ms_dn)
@@ -259,12 +262,12 @@ ms <- c(ms_up,ms_dn)
 sep <- setdiff(ms,mc_up)
 sep
 sep_up_only_df <- msep$enrichment_result[which(msep$enrichment_result$set %in% sep),]
-sep_up_only_df <- head(subset(sep_up_only_df,s.dist>0),10)
-sep_up_only_df %>% kbl(caption = "Upregulated sets identified in sep-DE only") %>% kable_paper("hover", full_width = F)
+sep_up_only_df <- subset(sep_up_only_df,s.dist>0)
+head(sep_up_only_df,10) %>% kbl(caption = "Upregulated sets identified in sep-DE only") %>% kable_paper("hover", full_width = F)
 
 sep_dn_only_df <- msep$enrichment_result[which(msep$enrichment_result$set %in% sep),]
-sep_dn_only_df <- head(subset(sep_dn_only_df,s.dist<0),10)
-sep_dn_only_df %>% kbl(caption = "Downregulated sets identified in sep-DE only") %>% kable_paper("hover", full_width = F)
+sep_dn_only_df <- subset(sep_dn_only_df,s.dist<0)
+head(sep_dn_only_df,10) %>% kbl(caption = "Downregulated sets identified in sep-DE only") %>% kable_paper("hover", full_width = F)
 
 # in comb but not sep
 comb <- setdiff(mc_up,ms)
@@ -273,6 +276,8 @@ comb_only_df <- mcom$enrichment_result[which(mcom$enrichment_result$set %in% com
 comb_only_df %>% kbl(caption = "Dysregulated sets identified in all-DE only") %>% kable_paper("hover", full_width = F)
 
 writeLines(text=sep,con="sep_sets.txt")
+writeLines(text=sep_up_only_df$set,con="sepup_sets.txt")
+writeLines(text=sep_dn_only_df$set,con="sepdn_sets.txt")
 writeLines(text=comb,con="comb_sets.txt")
 
 # intersection
@@ -296,6 +301,45 @@ length(mc_up)/length(all)
 
 ```
 
+
+## Now lets looks at the gene sets and see whether they were classified as (not)correlated
+
+```{r,cortest,fig.width=4,fig.height=4}
+
+#sep_up_only_df$set
+
+#cs <- read.table("cor.tsv",header=TRUE,sep="\t")
+cs <- read.csv("cor.tsv",header=TRUE,sep="\t")
+poscor <- rownames(subset(cs,pvalue<0.05&stat.t>0))
+nocor <- rownames(subset(cs,pvalue>0.05))
+negcor <- rownames(subset(cs,pvalue<0.05&stat.t<0))
+
+sep_up_only_pos <- length(which(sep_up_only_df$set %in% poscor))
+sep_up_only_neg <- length(which(sep_up_only_df$set %in% negcor))
+sep_up_only_no <- length(which(sep_up_only_df$set %in% nocor))
+
+sep_dn_only_pos <- length(which(sep_dn_only_df$set %in% poscor))
+sep_dn_only_neg <- length(which(sep_dn_only_df$set %in% negcor))
+sep_dn_only_no <- length(which(sep_dn_only_df$set %in% nocor))
+
+comb_only_pos <- length(which(comb %in% poscor))
+comb_only_neg <- length(which(comb %in% negcor))
+comb_only_no <- length(which(comb %in% nocor))
+
+sep_up_pie <- c("pos" = sep_up_only_pos , "no" = sep_up_only_no , "neg" = sep_up_only_neg )
+lbls <- paste(names(sep_up_pie), " (",sep_up_pie,")",sep="")
+pie(sep_up_pie, labels=lbls )
+
+sep_dn_pie <- c("pos" = sep_dn_only_pos , "no" = sep_dn_only_no , "neg" = sep_dn_only_neg )
+lbls <- paste(names(sep_dn_pie), " (",sep_dn_pie,")",sep="")
+pie(sep_dn_pie, labels=lbls)
+
+comb_pie <- c("pos" = comb_only_pos , "no" = comb_only_no , "neg" = comb_only_neg )
+lbls <- paste(names(comb_pie), " (",comb_pie,")",sep="")
+pie(comb_pie, labels=lbls)
+
+```
+
 ## Now use heatmap to visualise gene set regulation
 
 ```{r,heatmaps}
@@ -311,6 +355,19 @@ lapply(1:nrow(comb_only_df),function(i) {
   heatmap.2(as.matrix(mymx2),main=myset,trace="none", col=colfunc(25), scale="row",margin=c(6,12),Colv="none",dendrogram="row",cexCol=0.8,cexRow=0.5)
   make_volcano2(de,myset,genes)
 })
+
+pdf("com_heat.pdf")
+lapply(1:nrow(comb_only_df),function(i) {
+  myset <- comb_only_df$set[i]
+  genes <- genesets[[which(names(genesets) == myset)]]
+  mymx <- rpm2[which(rownames(rpm2) %in% genes),]
+  mymx2 <-  mymx / rowMeans(mymx)
+  mymx2 <- mymx2[which(!is.na(mymx2[,1])),]
+  colfunc <- colorRampPalette(c("blue", "white", "red"))
+  heatmap.2(as.matrix(mymx2),main=myset,trace="none", col=colfunc(25), scale="row",margin=c(6,12),Colv="none",dendrogram="row",cexCol=0.8,cexRow=0.5)
+  make_volcano2(de,myset,genes)
+})
+dev.off()
 
 ```
 
