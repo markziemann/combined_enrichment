@@ -56,7 +56,7 @@ dim(mx)
 # for testing only
 set.seed(42)
 mycols <- sample(x=2:ncol(mx),size=1000,replace=FALSE)
-mx <- mx[,mycols]
+mx <- mx[,c(1,mycols)]
 
 mx2 <- aggregate(. ~ Description,mx,sum)
 mx2[1:6,1:4]
@@ -127,7 +127,7 @@ res <- mclapply(1:length(genesets), function(i){
     cormax <- max(c(res$cor,res2$cor))
     cormin <- min(c(res$cor,res2$cor))
     setname <- names(genesets[i])
-    result <- list("inset"=res$cor, "rand"=res2$cor,"setname"=setname)
+    result <- list("inset"=res$cor, "rand"=res2$cor,"setname"=setname, "len"=len)
     return(result) 
   }
 }, mc.cores=round(detectCores()*3/4))
@@ -170,7 +170,8 @@ res2 <- lapply(1:length(res), function(i) {
   inset <- res[[i]]$inset
   rand <- res[[i]]$rand
   tt <- t.test(x=inset,y=rand)
-  return(c("stat"=tt$statistic,"pvalue"=tt$p.value))
+  len <- res[[i]]$len
+  return(c("stat"=tt$statistic,"pvalue"=tt$p.value, "n_members"=len))
 })
 
 res2 <- do.call(rbind,res2)
@@ -265,7 +266,7 @@ negcor_res <- res[which(sapply(res,"[[",3) %in% rownames(negcor))]
 
 ```
 
-```{r,negvio}
+```{r,negvio,fig.height=4,fig.width=4}
 
 z <- lapply(1:length(negcor_res), function(i){
   setname <- negcor_res[[i]]$setname
@@ -336,7 +337,7 @@ grid()
 hist(tstats,xlim=c(-50,50),breaks=100,main="",xlab="test statistic")
 grid()
 
-pdf("hist.pdf",height=5,width=5)
+pdf("hist.pdf",height=6,width=6)
   par(mfrow=c(2,1))
   hist(tstats,breaks=100,main="",xlab="test statistic")
   grid()
