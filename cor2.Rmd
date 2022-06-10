@@ -48,13 +48,15 @@ if (! file.exists("GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_reads.gct.gz")
 }
 
 # import data
-mx <- read.table("GTEx_data2.tsv",header=TRUE,row.names=1)
+mx <- read.table("GTEx_data.tsv",header=TRUE,row.names=1)
 mx[1:6,1:4]
 dim(mx)
 
-# downsample 50 samples only
+# downsample 1000 samples only
 # for testing only
-#mx <- mx[,1:50]
+set.seed(42)
+mycols <- sample(x=2:ncol(mx),size=1000,replace=FALSE)
+mx <- mx[,mycols]
 
 mx2 <- aggregate(. ~ Description,mx,sum)
 mx2[1:6,1:4]
@@ -154,8 +156,8 @@ z <- lapply(1:6, function(i){
 
   data$inset <- sample(x=data$inset,size=1000,replace=TRUE)
   data$rand <- sample(x=data$rand,size=1000,replace=TRUE)
-  boxplot(data,col="white",ylab="Spearman rho",main=setname)
-  beeswarm(data,add=TRUE,pch=19,cex=0.8)
+  boxplot(data,col="white",ylab="Spearman rho",main=setname, cex=0)
+  beeswarm(data,add=TRUE,pch=19,cex=0.6)
 })
 
 ```
@@ -212,11 +214,31 @@ z <- lapply(1:length(poscor_res), function(i){
 
   data$inset <- sample(x=data$inset,size=1000,replace=TRUE)
   data$rand <- sample(x=data$rand,size=1000,replace=TRUE)
-  boxplot(data,col="white",ylab="Spearman rho",main=setname)
+  boxplot(data,col="white",ylab="Spearman rho",main=setname,cex=0)
   grid()
-  beeswarm(data,add=TRUE,pch=19,cex=0.8)
+  beeswarm(data,add=TRUE,pch=19,cex=0.6)
   mtext(paste("n=",n))
 })
+
+pdf("posvio.pdf",height=5,width=5)
+z <- lapply(1:length(poscor_res), function(i){
+  setname <- poscor_res[[i]]$setname
+  gset <- genesets[[which(names(genesets) ==setname)]]
+  n <- length(which(gset %in% rownames(rpm)))
+  data <- poscor_res[[i]][1:2]
+
+  vioplot(data , ylab="Spearman rho",main=setname  )
+  grid()
+  mtext(paste("n=",n))
+
+  data$inset <- sample(x=data$inset,size=1000,replace=TRUE)
+  data$rand <- sample(x=data$rand,size=1000,replace=TRUE)
+  boxplot(data,col="white",ylab="Spearman rho",main=setname,cex=0)
+  grid()
+  beeswarm(data,add=TRUE,pch=19,cex=0.6)
+  mtext(paste("n=",n))
+})
+dev.off()
 
 ```
 
@@ -235,21 +257,21 @@ z <- lapply(1:10, function(i) {
 
 Now focus on negatively correlated sets.
 
-```{r,anticor}
+```{r,negcor}
 
-anticor <- head(res2[order(res2[,1]),],10)
-anticor #%>% kbl(caption="most anti-correlated gene sets") %>% kable_paper("hover", full_width = F)
-anticor_res <- res[which(sapply(res,"[[",3) %in% rownames(anticor))]
+negcor <- head(res2[order(res2[,1]),],10)
+negcor #%>% kbl(caption="most anti-correlated gene sets") %>% kable_paper("hover", full_width = F)
+negcor_res <- res[which(sapply(res,"[[",3) %in% rownames(negcor))]
 
 ```
 
 ```{r,negvio}
 
-z <- lapply(1:length(anticor_res), function(i){
-  setname <- poscor_res[[i]]$setname
+z <- lapply(1:length(negcor_res), function(i){
+  setname <- negcor_res[[i]]$setname
   gset <- genesets[[which(names(genesets) ==setname)]]
   n <- length(which(gset %in% rownames(rpm)))
-  data <- poscor_res[[i]][1:2]
+  data <- negcor_res[[i]][1:2]
 
   vioplot(data , ylab="Spearman rho",main=setname  )
   grid()
@@ -257,11 +279,33 @@ z <- lapply(1:length(anticor_res), function(i){
 
   data$inset <- sample(x=data$inset,size=1000,replace=TRUE)
   data$rand <- sample(x=data$rand,size=1000,replace=TRUE)
-  boxplot(data,col="white",ylab="Spearman rho",main=setname)
+  boxplot(data,col="white",ylab="Spearman rho",main=setname,cex=0)
   grid()
-  beeswarm(data,add=TRUE,pch=19,cex=0.8)
+  beeswarm(data,add=TRUE,pch=19,cex=0.6)
   mtext(paste("n=",n))
 })
+
+
+pdf("negvio.pdf",height=5,width=5)
+z <- lapply(1:length(negcor_res), function(i){
+  setname <- negcor_res[[i]]$setname
+  gset <- genesets[[which(names(genesets) ==setname)]]
+  n <- length(which(gset %in% rownames(rpm)))
+  data <- negcor_res[[i]][1:2]
+
+  vioplot(data , ylab="Spearman rho",main=setname  )
+  grid()
+  mtext(paste("n=",n))
+
+  data$inset <- sample(x=data$inset,size=1000,replace=TRUE)
+  data$rand <- sample(x=data$rand,size=1000,replace=TRUE)
+  boxplot(data,col="white",ylab="Spearman rho",main=setname,cex=0)
+  grid()
+  beeswarm(data,add=TRUE,pch=19,cex=0.6)
+  mtext(paste("n=",n))
+})
+dev.off()
+
 
 ```
 
@@ -270,11 +314,11 @@ Heatmap of neg cor sets.
 ```{r,negheat}
 
 z <- lapply(1:10, function(i) {
-setname <- rownames(anticor)[i]
-gset <- genesets[[which(names(genesets) ==setname)]]
-mx <- rpm[which(rownames(rpm) %in% gset),]
-heatmap.2(as.matrix(mx),trace="none",scale="row",main=setname,margin=c(5,7))
-heatmap.2(cor(t(mx)),trace="none",scale="none",main=setname,margin=c(5,7))
+  setname <- rownames(negcor)[i]
+  gset <- genesets[[which(names(genesets) ==setname)]]
+  mx <- rpm[which(rownames(rpm) %in% gset),]
+  heatmap.2(as.matrix(mx),trace="none",scale="row",main=setname,margin=c(5,7))
+  heatmap.2(cor(t(mx)),trace="none",scale="none",main=setname,margin=c(5,7))
 })
 
 ```
@@ -283,20 +327,38 @@ Now visualise the test statistics found.
 
 ```{r,viz2,fig.width=5,fig.height=5}
 
-res2 <- read.table("cor.tsv",sep="\t")
+#res2 <- read.table("cor.tsv",sep="\t")
+tstats <- res2[,"stat.t"]
 
 par(mfrow=c(2,1))
-hist(res2[,"stat.t"],breaks=100,main="",xlab="test statistic")
-boxplot(res2[,"stat.t"],horizontal=TRUE)
-hist(res2[,"stat.t"],xlim=c(-50,50),breaks=100,main="",xlab="test statistic")
-boxplot(res2[,"stat.t"],ylim=c(-50,50),horizontal=TRUE)
+hist(tstats,breaks=100,main="",xlab="test statistic")
+grid()
+hist(tstats,xlim=c(-50,50),breaks=100,main="",xlab="test statistic")
+grid()
 
 pdf("hist.pdf",height=5,width=5)
-par(mfrow=c(2,1))
-hist(res2[,"stat.t"],breaks=100,main="",xlab="test statistic")
-boxplot(res2[,"stat.t"],horizontal=TRUE)
-hist(res2[,"stat.t"],xlim=c(-50,50),breaks=100,main="",xlab="test statistic")
-boxplot(res2[,"stat.t"],ylim=c(-50,50),horizontal=TRUE)
+  par(mfrow=c(2,1))
+  hist(tstats,breaks=100,main="",xlab="test statistic")
+  grid()
+  hist(tstats,xlim=c(-50,50),breaks=100,main="",xlab="test statistic")
+  grid()
+dev.off()
+
+boxplot(tstats,horizontal=TRUE,col="white",cex=0, xlab="t-test statistic")
+grid()
+beeswarm(tstats,add=TRUE,pch=19,cex=0.4,horiz=TRUE)
+boxplot(tstats,horizontal=TRUE,col="white",cex=0,ylim=c(-50,50),xlab="t-test statistic")
+grid()
+beeswarm(tstats,add=TRUE,pch=19,cex=0.4,horiz=TRUE)
+
+pdf("tstat_swarm.pdf",height=5,width=5)
+  par(mfrow=c(2,1))
+  boxplot(tstats,horizontal=TRUE,col="white",cex=0, xlab="t-test statistic")
+  grid()
+  beeswarm(tstats,add=TRUE,pch=19,cex=0.4,horiz=TRUE)
+  boxplot(tstats,horizontal=TRUE,col="white",cex=0,ylim=c(-50,50),xlab="t-test statistic")
+  grid()
+  beeswarm(tstats,add=TRUE,pch=19,cex=0.4,horiz=TRUE)
 dev.off()
 
 par(mfrow=c(1,1))
@@ -313,8 +375,8 @@ barplot(bars,ylab="no. gene sets with correlated expression",ylim=c(0,max(bars)*
 text(((1:length(bars))-0.5)*1.25,bars+50,labels=bars)
 
 pdf("bars.pdf",height=4,width=4)
-barplot(bars,ylab="no. gene sets with correlated expression",ylim=c(0,max(bars)*1.3))
-text(((1:length(bars))-0.5)*1.25,bars+50,labels=bars)
+  barplot(bars,ylab="no. gene sets with correlated expression",ylim=c(0,max(bars)*1.3))
+  text(((1:length(bars))-0.5)*1.25,bars+50,labels=bars)
 dev.off()
 
 ```
