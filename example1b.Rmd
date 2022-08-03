@@ -1,0 +1,660 @@
+---
+title: "SRP128998: Combining up and downregulated genes in enrichment analysis?"
+author: "Mark Ziemann"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
+    fig_width: 7
+    fig_height: 7
+theme: cosmo
+---
+
+Source: https://github.com/markziemann/combined_enrichment
+
+## Intro
+
+Here we are performing an analysis of some gene expression data to understand whether direction agnostic (DA) or direction informed (DI) 
+enrichment analysis is recommended.
+
+This will be demonstrated by using ORA and FCS approaches.
+Clusterprofiler will be used for ORA, while CAMERA will be used for FCS.
+
+The dataset being used is SRP128998 and we are comparing the cells grown in normal glucose condition (control) to the high glucose condition (case).
+
+Data are obtained from http://dee2.io/
+
+```{r,begin}
+
+suppressPackageStartupMessages({
+library("getDEE2") 
+library("DESeq2")
+library("limma")
+library("clusterProfiler")
+library("mitch")
+library("kableExtra")
+library("eulerr")
+library("gplots")
+})
+
+dir.create("images")
+
+```
+
+## Get expression data and make an MDS plot
+
+I'm using some RNA-seq data looking at the effect of hyperglycemia on hepatocytes.
+
+```{r,getdata}
+
+name="SRP128998"
+mdat<-getDEE2Metadata("hsapiens")
+samplesheet <- mdat[grep("SRP128998",mdat$SRP_accession),]
+samplesheet<-samplesheet[order(samplesheet$SRR_accession),]
+samplesheet$trt<-as.factor(c(1,1,1,1,1,1,0,0,0,0,0,0))
+samplesheet$VPA<-as.factor(c(0,0,0,1,1,1,0,0,0,1,1,1))
+s1 <- subset(samplesheet,VPA==0)
+
+s1 #%>% kbl(caption = "sample sheet") %>% kable_paper("hover", full_width = F)
+
+w<-getDEE2("hsapiens",samplesheet$SRR_accession,metadata=mdat,legacy = TRUE)
+x<-Tx2Gene(w)
+x<-x$Tx2Gene
+
+# save the genetable for later
+gt<-w$GeneInfo[,1,drop=FALSE]
+gt$accession<-rownames(gt)
+
+# counts 
+x1<-x[,which(colnames(x) %in% s1$SRR_accession)]
+
+# calculate RPM
+rpm <- x1/colSums(x1) * 1000000
+rownames(rpm) <- sapply(strsplit(rownames(rpm),"\\."),"[[",1)
+
+# convert to gene symbols
+rpm2 <- rpm
+rpm2$symbol <- w$GeneInfo[match(rownames(rpm),rownames(w$GeneInfo)),"GeneSymbol"]
+rpm2 <- aggregate(. ~ symbol, rpm2, sum)
+rownames(rpm2) <- rpm2$symbol
+rpm2$symbol=NULL
+
+```
+
+Here show the number of genes in the annotation set, and those detected above the detection threshold.
+
+```{r,filter}
+
+# filter out lowly expressed genes
+x1<-x1[which(rowMeans(x1)>=(10)),]
+nrow(x)
+nrow(x1)
+
+```
+
+Now multidimensional scaling (MDS) plot to show the correlation between the datasets.
+If the control and case datasets are clustered separately, then it is likely that there will be many differentially expressed genes with FDR<0.05.
+
+```{r,mds}
+
+plot(cmdscale(dist(t(x1))), xlab="Coordinate 1", ylab="Coordinate 2", pch=19, col=s1$trt, main="MDS")
+
+```
+
+## Differential expression
+
+Now run DESeq2 for control vs case.
+
+```{r,deseq2}
+
+y <- DESeqDataSetFromMatrix(countData = round(x1), colData = s1, design = ~ trt)
+y <- DESeq(y)
+de <- results(y)
+de<-as.data.frame(de[order(de$pvalue),])
+rownames(de)<-sapply(strsplit(rownames(de),"\\."),"[[",1)
+head(de) #%>% kbl() %>% kable_paper("hover", full_width = F)
+
+```
+
+Now let's have a look at some of the charts showing differential expression.
+In particular, an MA plot and volcano plot.
+
+```{r,deplots,fig.width=7,fig.height=7}
+
+maplot <- function(de,contrast_name) {
+  sig <-subset(de, padj < 0.05 )
+  up <-rownames(subset(de, padj < 0.05 & log2FoldChange > 0))
+  dn <-rownames(subset(de, padj < 0.05 & log2FoldChange < 0))
+  GENESUP <- length(up)
+  GENESDN <- length(dn)
+  DET=nrow(de)
+  SUBHEADER = paste(GENESUP, "up, ", GENESDN, "down", DET, "detected")
+  ns <-subset(de, padj > 0.05 )
+  plot(log2(de$baseMean),de$log2FoldChange, 
+       xlab="log2 basemean", ylab="log2 foldchange",
+       pch=19, cex=0.5, col="dark gray",
+       main=contrast_name, cex.main=0.7)
+  points(log2(sig$baseMean),sig$log2FoldChange,
+         pch=19, cex=0.5, col="red")
+  mtext(SUBHEADER,cex = 0.7)
+}
+
+make_volcano <- function(de,name) {
+    sig <- subset(de,padj<0.05)
+    N_SIG=nrow(sig)
+    N_UP=nrow(subset(sig,log2FoldChange>0))
+    N_DN=nrow(subset(sig,log2FoldChange<0))
+    DET=nrow(de)
+    HEADER=paste(N_SIG,"@5%FDR,", N_UP, "up", N_DN, "dn", DET, "detected")
+    plot(de$log2FoldChange,-log10(de$padj),cex=0.5,pch=19,col="darkgray",
+        main=name, xlab="log2 FC", ylab="-log10 pval", xlim=c(-6,6))
+    mtext(HEADER)
+    grid()
+    points(sig$log2FoldChange,-log10(sig$padj),cex=0.5,pch=19,col="red")
+}
+
+make_volcano2 <- function(de,name,genes) {
+  myens <- rownames(w$GeneInfo)[match(genes,w$GeneInfo$GeneSymbol)]
+  sig <- de[which(rownames(de) %in% myens),]
+    N_SIG=nrow(subset(sig,padj<0.05))
+    N_UP=nrow(subset(sig,log2FoldChange>0 & padj<0.05))
+    N_DN=nrow(subset(sig,log2FoldChange<0 & padj<0.05))
+    DET=nrow(sig)
+    HEADER=paste(N_SIG,"@5%FDR,", N_UP, "up", N_DN, "dn", DET, "detected")
+    plot(de$log2FoldChange,-log10(de$padj),cex=0.5,pch=19,col="darkgray",
+        main=name, xlab="log2 FC", ylab="-log10 pval", xlim=c(-6,6))
+    mtext(HEADER)
+    grid()
+    points(sig$log2FoldChange,-log10(sig$padj),cex=0.5,pch=19,col="red")
+}
+
+maplot(de,name)
+make_volcano(de,name)
+
+```
+
+## Gene sets from Reactome
+
+In order to perform gene set analysis, we need some gene sets. 
+
+```{r,reactome}
+
+if (! file.exists("ReactomePathways.gmt")) {
+  download.file("https://reactome.org/download/current/ReactomePathways.gmt.zip", 
+    destfile="ReactomePathways.gmt.zip")
+  unzip("ReactomePathways.gmt.zip")
+}
+genesets<-gmt_import("ReactomePathways.gmt")
+
+```
+
+## FCS wit CameraPR
+
+This is a pre-ranked approximation for CAMERA.
+
+`cameraPR(statistic, index, use.ranks = FALSE, inter.gene.cor=0.01, sort = TRUE, ...)`
+
+Standard approach.
+
+```{r,cam1}
+
+dem <-merge(de,gt,by=0)
+stat <- dem$stat
+names(stat) <- dem$GeneSymbol
+cres <- cameraPR(statistic=stat, index=genesets, use.ranks = TRUE, inter.gene.cor=0.01, sort = TRUE )
+cs_up <- rownames(subset(cres,Direction=="Up" & FDR<0.05))
+cs_dn <- rownames(subset(cres,Direction=="Down" & FDR<0.05))
+message(paste("Number of up-regulated pathways:",length(cs_up) ))
+message(paste("Number of down-regulated pathways:",length(cs_dn) ))
+head(cres,10) #%>% kbl() %>% kable_paper("hover", full_width = F)
+
+```
+
+Combined approach.
+
+```{r,cam2}
+
+dem <-merge(de,gt,by=0)
+stat <- abs(dem$stat)
+names(stat) <- dem$GeneSymbol
+cres <- cameraPR(statistic=stat, index=genesets, use.ranks = TRUE, inter.gene.cor=0.01, sort = TRUE )
+cc_up <- rownames(subset(cres,Direction=="Up" & FDR<0.05))
+cc_dn <- rownames(subset(cres,Direction=="Down" & FDR<0.05))
+message(paste("Number of up-regulated pathways:",length(cc_up) ))
+message(paste("Number of down-regulated pathways:",length(cc_dn) ))
+head(cres,10) #%>% kbl() %>% kable_paper("hover", full_width = F)
+
+```
+
+## FCS with Mitch
+
+Mitch uses rank-ANOVA statistics for enrichment detection.
+
+Here I'm using the standard approach
+
+```{r,mitch1}
+
+m <- mitch_import(de,DEtype = "DEseq2", geneTable = gt)
+msep <- mitch_calc(m,genesets = genesets)
+ms_up <- subset(msep$enrichment_result,p.adjustANOVA<0.05 & s.dist > 0)[,1]
+ms_dn <- subset(msep$enrichment_result,p.adjustANOVA<0.05 & s.dist < 0)[,1]
+message(paste("Number of up-regulated pathways:",length(ms_up) ))
+message(paste("Number of down-regulated pathways:",length(ms_dn) ))
+head(msep$enrichment_result,10)  #%>% kbl() %>% kable_paper("hover", full_width = F)
+#mitch_report(msep,outfile="mitch_separate.html",overwrite=TRUE)
+
+```
+
+Here I'm using the combined approach.
+
+```{r,mitch2}
+
+mcom <- mitch_calc(abs(m),genesets = genesets)
+mc_up <- subset(mcom$enrichment_result,p.adjustANOVA<0.05 & s.dist > 0)[,1]
+mc_dn <- subset(mcom$enrichment_result,p.adjustANOVA<0.05 & s.dist < 0)[,1]
+message(paste("Number of up-regulated pathways:",length(mc_up) ))
+message(paste("Number of down-regulated pathways:",length(mc_dn) ))
+head(mcom$enrichment_result,10)  #%>% kbl() %>% kable_paper("hover", full_width = F)
+#mitch_report(mcom,outfile="mitch_combined.html",overwrite=TRUE)
+
+```
+
+Let's look at the significant ones based on the combined analysis.
+There weren't many gene sets classed as significant.
+Let's see how many have a direction agnostic enrichment score which is larger in magnitude than the direction informed enrichment score.
+There are only 11 such sets which would benefit from such combined analysis.
+
+Euler diagram of the significant pathways found with each approach.
+
+```{r,mitch_euler1}
+
+l0 <- list("sep-DE up"=ms_up,"sep-DE dn"=ms_dn,"all-DE up"=mc_up,"all-DE dn"=mc_dn)
+par(cex.main=0.5)
+plot(euler(l0),quantities = TRUE, edges = "gray", main="FCS: combined vs separated")
+
+pdf("euler.pdf")
+plot(euler(l0),quantities = TRUE, edges = "gray", main="FCS: combined vs separated")
+dev.off()
+
+length(ms_up)
+length(ms_dn)
+length(ms_up)+length(ms_dn)
+
+length(mc_up)
+length(mc_dn)
+length(mc_up)+length(mc_dn)
+
+( length(ms_up)+length(ms_dn) ) / ( length(mc_up)+length(mc_dn) )
+
+
+```
+
+List gene sets which are specific to each approach.
+
+```{r,mitch_sets}
+
+ms <- c(ms_up,ms_dn)
+
+# in sep but not comb
+sep <- setdiff(ms,mc_up)
+sep
+sep_up_only_df <- msep$enrichment_result[which(msep$enrichment_result$set %in% sep),]
+sep_up_only_df <- subset(sep_up_only_df,s.dist>0)
+head(sep_up_only_df,10) %>% kbl(caption = "Upregulated sets identified in sep-DE only") %>% kable_paper("hover", full_width = F)
+
+sep_dn_only_df <- msep$enrichment_result[which(msep$enrichment_result$set %in% sep),]
+sep_dn_only_df <- subset(sep_dn_only_df,s.dist<0)
+head(sep_dn_only_df,10) %>% kbl(caption = "Downregulated sets identified in sep-DE only") %>% kable_paper("hover", full_width = F)
+
+# in comb but not sep
+comb <- setdiff(mc_up,ms)
+comb
+comb_only_df <- mcom$enrichment_result[which(mcom$enrichment_result$set %in% comb),]
+comb_only_df %>% kbl(caption = "Dysregulated sets identified in all-DE only") %>% kable_paper("hover", full_width = F)
+
+writeLines(text=sep,con="sep_sets.txt")
+writeLines(text=sep_up_only_df$set,con="sepup_sets.txt")
+writeLines(text=sep_dn_only_df$set,con="sepdn_sets.txt")
+writeLines(text=comb,con="comb_sets.txt")
+
+# intersection
+intersect(mc_up,ms)
+
+```
+
+If we consider both strategies to be valid, then we can define the significant sets as
+dysregulated. 
+We can calculate the percent sentitivity of both approaches.
+
+```{r,mitch_proportion}
+
+all <- unique(c(ms_up,ms_dn,mc_up))
+
+message("Sensitivity: separate only")
+(length(ms_up)+length(ms_dn))/length(all)
+
+message("Sensitivity: combined only")
+length(mc_up)/length(all)
+
+```
+
+
+## Now lets looks at the gene sets and see whether they were classified as (not)correlated
+
+```{r,cortest,fig.width=4,fig.height=4}
+
+#sep_up_only_df$set
+
+#cs <- read.table("cor.tsv",header=TRUE,sep="\t")
+cs <- read.csv("cor.tsv",header=TRUE,sep="\t")
+poscor <- rownames(subset(cs,pvalue<0.05&stat.t>0))
+nocor <- rownames(subset(cs,pvalue>0.05))
+negcor <- rownames(subset(cs,pvalue<0.05&stat.t<0))
+
+sep_up_only_pos <- length(which(sep_up_only_df$set %in% poscor))
+sep_up_only_neg <- length(which(sep_up_only_df$set %in% negcor))
+sep_up_only_no <- length(which(sep_up_only_df$set %in% nocor))
+
+sep_dn_only_pos <- length(which(sep_dn_only_df$set %in% poscor))
+sep_dn_only_neg <- length(which(sep_dn_only_df$set %in% negcor))
+sep_dn_only_no <- length(which(sep_dn_only_df$set %in% nocor))
+
+comb_only_pos <- length(which(comb %in% poscor))
+comb_only_neg <- length(which(comb %in% negcor))
+comb_only_no <- length(which(comb %in% nocor))
+
+sep_up_pie <- c("pos" = sep_up_only_pos , "no" = sep_up_only_no , "neg" = sep_up_only_neg )
+lbls <- paste(names(sep_up_pie), " (",sep_up_pie,")",sep="")
+pie(sep_up_pie, labels=lbls )
+
+sep_dn_pie <- c("pos" = sep_dn_only_pos , "no" = sep_dn_only_no , "neg" = sep_dn_only_neg )
+lbls <- paste(names(sep_dn_pie), " (",sep_dn_pie,")",sep="")
+pie(sep_dn_pie, labels=lbls)
+
+comb_pie <- c("pos" = comb_only_pos , "no" = comb_only_no , "neg" = comb_only_neg )
+lbls <- paste(names(comb_pie), " (",comb_pie,")",sep="")
+pie(comb_pie, labels=lbls)
+
+```
+
+## Now use heatmap to visualise gene set regulation
+
+```{r,heatmaps}
+
+comb_only_df
+lapply(1:nrow(comb_only_df),function(i) {
+  myset <- comb_only_df$set[i]
+  genes <- genesets[[which(names(genesets) == myset)]]
+  mymx <- rpm2[which(rownames(rpm2) %in% genes),]
+  mymx2 <-  mymx / rowMeans(mymx)
+  mymx2 <- mymx2[which(!is.na(mymx2[,1])),]
+  colfunc <- colorRampPalette(c("blue", "white", "red"))
+  heatmap.2(as.matrix(mymx2),main=myset,trace="none", col=colfunc(25), scale="row",margin=c(6,12),Colv="none",dendrogram="row",cexCol=0.8,cexRow=0.5)
+  make_volcano2(de,myset,genes)
+})
+
+pdf("com_heat.pdf")
+lapply(1:nrow(comb_only_df),function(i) {
+  myset <- comb_only_df$set[i]
+  genes <- genesets[[which(names(genesets) == myset)]]
+  mymx <- rpm2[which(rownames(rpm2) %in% genes),]
+  mymx2 <-  mymx / rowMeans(mymx)
+  mymx2 <- mymx2[which(!is.na(mymx2[,1])),]
+  colfunc <- colorRampPalette(c("blue", "white", "red"))
+  heatmap.2(as.matrix(mymx2),main=myset,trace="none", col=colfunc(25), scale="row",margin=c(6,12),Colv="none",dendrogram="row",cexCol=0.8,cexRow=0.5)
+  make_volcano2(de,myset,genes)
+})
+dev.off()
+
+```
+
+## FCS overlap between sep and combined shown as volcano
+
+```{r,sepcom_volcano_fcs1}
+
+msep_res <- msep$enrichment_result
+msep_sig <- subset(msep_res,p.adjustANOVA<0.05)
+mc_up_res <- msep_res[which(msep_res$set %in% mc_up),]
+
+plot(msep_res$s.dist,-log10(msep_res$pANOVA),
+  pch=19,cex=0.5,col="darkgray",
+  xlab="s distance (sep)", ylab="-log10(p) (sep)")
+
+fdrline <- msep_res[tail(which(msep_res$p.adjustANOVA<0.05),1),"pANOVA"]
+
+abline(h=-log10(fdrline),lty=2,lwd=2,col="black")
+
+#points(msep_sig$s.dist,-log10(msep_sig$pANOVA),
+#  pch=19,cex=0.5,col="red")
+
+points(mc_up_res$s.dist,-log10(mc_up_res$pANOVA),
+  cex=0.7,col="blue")
+
+mtext("blue: comb FDR<0.05")
+
+```
+
+```{r,sepcom_volcano_fcs2}
+
+mcom_res <- mcom$enrichment_result
+
+mcom_sig <- subset(mcom_res,p.adjustANOVA<0.05 & s.dist > 0)
+
+ms_res <- mcom_res[which(mcom_res$set %in% ms),]
+
+plot(mcom_res$s.dist,-log10(mcom_res$pANOVA),
+  pch=19,cex=0.5,col="darkgray",
+  xlab="s distance (com)", ylab="-log10(p) (com)")
+
+fdrline <- mcom_res[tail(which(mcom_res$p.adjustANOVA<0.05),1),"pANOVA"]
+
+abline(h=-log10(fdrline),lty=2,lwd=2,col="black")
+
+#points(mcom_sig$s.dist,-log10(mcom_sig$pANOVA),
+#  pch=19,cex=0.5,col="blue")
+
+points(ms_res$s.dist,-log10(ms_res$pANOVA),
+  pch=1,cex=0.7,col="red")
+
+mtext("red: sep FDR<0.05")
+
+```
+
+
+## ORA with clusterprofiler
+
+Clusterprofiler uses a hypergeometric test.
+Firstly I will conduct the analysis separately for up and down regulated genes and with the correct backgound (as intended by the developers).
+
+```{r,cp1}
+
+genesets2 <- read.gmt("ReactomePathways.gmt")
+
+de_up <- rownames(subset(de, padj<0.05 & log2FoldChange > 0))
+de_up <- unique(gt[which(rownames(gt) %in% de_up),1])
+
+de_dn <- rownames(subset(de, padj<0.05 & log2FoldChange < 0))
+de_dn <- unique(gt[which(rownames(gt) %in% de_dn),1])
+
+de_bg <- rownames(de)
+de_bg <- unique(gt[which(rownames(gt) %in% de_bg),1])
+
+o_up_res <- as.data.frame(enricher(gene = de_up, universe = de_bg,  maxGSSize = 5000, TERM2GENE = genesets2, 
+  pAdjustMethod="fdr", pvalueCutoff = 1, qvalueCutoff = 1 ))
+o_up <- rownames(subset(o_up_res, p.adjust < 0.05))
+       
+o_dn_res <- as.data.frame(enricher(gene = de_dn, universe = de_bg,  maxGSSize = 5000, TERM2GENE = genesets2, 
+  pAdjustMethod="fdr", pvalueCutoff = 1, qvalueCutoff = 1 ))
+o_dn <- rownames(subset(o_dn_res, p.adjust < 0.05))
+
+o_com_res <- as.data.frame(enricher(gene = union(de_up,de_dn), universe = de_bg,  maxGSSize = 5000, TERM2GENE = genesets2, 
+  pAdjustMethod="fdr",  pvalueCutoff = 1, qvalueCutoff = 1  ))
+o_com <- rownames(subset(o_com_res, p.adjust < 0.05))
+
+length(o_up)
+length(o_dn)
+length(o_up) + length(o_dn)
+length(o_com)
+
+( length(o_up) + length(o_dn) ) / length(o_com)
+
+all <- unique(c(o_up,o_dn,o_com))
+
+message("Sensitivity: separate only")
+(length(o_up)+length(o_dn))/length(all)
+
+message("Sensitivity: combined only")
+length(o_com)/length(all)
+
+```
+
+Euler diagram of the significant pathways found with each approach.
+
+```{r,cp_euler1}
+
+l2 <- list("sep up"=o_up,"sep dn"=o_dn,"comb"=o_com)
+
+plot(euler(l2),quantities = TRUE, edges = "gray", main="ORA: combined vs separated")
+
+```
+
+List gene sets which are specific to each approach.
+
+```{r,ora_sets}
+
+o_sep <- c(o_up,o_dn)
+
+# in sep but not comb
+setdiff(o_sep,o_com)
+
+# in comb but not sep
+setdiff(o_com,o_sep)
+
+# intersection
+intersect(mc_up,ms)
+
+```
+
+## Overlap between sep and combined shown as volcano
+
+```{r,sepcom_volcano_ora1}
+
+o_up_res$er <- sapply(o_up_res$GeneRatio , function(x) eval(parse(text=x))) / 
+  sapply(o_up_res$BgRatio , function(x) eval(parse(text=x)))
+o_up_res <- subset(o_up_res,er>1)
+
+o_dn_res$er <- sapply(o_dn_res$GeneRatio , function(x) eval(parse(text=x))) / 
+  sapply(o_dn_res$BgRatio , function(x) eval(parse(text=x))) 
+o_dn_res <- subset(o_dn_res,er>1)
+o_dn_res$er <- o_dn_res$er  * -1
+o_sep_res <- rbind(o_up_res,o_dn_res)
+o_sep_res <- o_sep_res[order(o_sep_res$pvalue),]
+o_sep_sig <- subset(o_sep_res, p.adjust < 0.05)
+
+o_sep_com <-  o_sep_res[which(o_sep_res$ID %in% o_com),]
+o_sep_com <- o_sep_com[which(!duplicated(o_sep_com$ID)),]
+
+plot(o_sep_res$er,-log10(o_sep_res$pvalue),
+  pch=19,cex=0.5,col="darkgray",
+  xlab="enrichment ratio (sep)", ylab="-log10(p) (sep)")
+
+fdrline <- o_sep_res[tail(which(o_sep_res$p.adjust<0.05),1),"pvalue"]
+
+abline(h=-log10(fdrline),lty=2,lwd=2,col="black")
+
+#points(o_sep_sig$er,-log10(o_sep_sig$pvalue),
+#  pch=19,cex=0.5,col="red")
+
+points(o_sep_com$er,-log10(o_sep_com$pvalue),
+  ,cex=0.7,col="blue")
+
+mtext("blue: comb FDR<0.05")
+
+```
+
+```{r,sepcom_volcano_ora2}
+
+o_com_res$er <- sapply(o_com_res$GeneRatio , function(x) eval(parse(text=x))) /
+  sapply(o_com_res$BgRatio , function(x) eval(parse(text=x)))
+
+o_com_sep <- o_com_res[which(o_com_res$ID %in% o_sep_sig$ID),]
+
+plot(o_com_res$er,-log10(o_com_res$pvalue),
+  pch=19,cex=0.5,col="darkgray",
+  xlab="enrichment ratio (com)", ylab="-log10(p) (com)")
+
+fdrline <- o_com_res[tail(which(o_com_res$p.adjust<0.05),1),"pvalue"]
+abline(h=-log10(fdrline),lty=2,lwd=2,col="black")
+
+points(o_com_sep$er,-log10(o_com_sep$pvalue),
+  ,cex=0.7,col="red")
+
+mtext("red: sep FDR<0.05")
+
+```
+
+## Euler diagrams comparing FCS and ORA methods
+
+```{r,euler_comparison}
+
+par(cex.main=0.5)
+
+par(mar=c(2,2,2,2))
+
+l3 <- list("ORA up"=o_up,"ORA dn"=o_dn,"ORA comb"=o_com,
+  "FCS up"=ms_up,"FCS dn"=ms_dn,"FCS comb"=mc_up)
+
+plot(euler(l3),quantities = TRUE, edges = "gray", main="FCS compared to ORA")
+
+```
+
+## Save data
+
+```{r,save}
+
+dat <- list(  "FCS_up"=ms_up,
+  "FCS_dn"=ms_dn,
+  "FCS_com"=mc_up,
+  "ORA_up"= o_up,
+  "ORA_dn"=o_dn,
+  "ORA_com"=o_com)
+
+str(dat)
+saveRDS(dat,file = "ex1dat.rds")
+
+```
+
+## Conclusion
+
+For mitch, it would appear that performing direction informed (DI) analysis clearly yields more differentially regulated pathways
+(413) as compared to the direction agnostic (DA) method (55).
+
+That being said, there were 18 pathways identified only in the DA method that appeared to be related to the physiology of the model.
+These gene sets are likely to contain a mix of genes affected by the stimulus in different ways - for example a mix of up and 
+downregulated genes.
+Are these really real? Not sure.
+
+This pattern was consistent with ORA, where 80 sets were identified with separate analysis and only 23 with the combined analysis.
+
+When comparing ORA to FCS, we found that FCS identified many more sets than ORA. 
+In fact all gene sets that were identified by ORA were also identified by FCS, except for 3 that were specific to the ORA up set.
+
+Let's look at those now.
+
+```{r,conc}
+
+myfcs <- c(ms_up, mc_up)
+
+setdiff(o_up,myfcs)
+
+```
+
+## Session information
+
+```{r,session}
+
+sessionInfo()
+
+```
