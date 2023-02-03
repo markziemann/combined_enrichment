@@ -1,0 +1,90 @@
+library("DESeq2")
+library("mitch")
+library(parallel)
+
+# demonstrate whether sep-de has more statistical power and less
+# false positives as compared to all-de
+
+#download.file("https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE158420&format=file&file=GSE158420%5Fcounts%2Etxt%2Egz",destfile="GSE158420_counts.txt")
+x <- read.table("GSE158420_counts.txt.gz",row.names=NULL,header=TRUE)
+xf <- x[rowMeans(x[,2:75]) > 10,]
+xfa <- aggregate(. ~ row.names, xf, sum )
+xm <- as.matrix(xfa[,2:ncol(xfa)])
+row.names(xm) <- xfa$row.names
+ss <- as.data.frame(colnames(xm))
+ss$t <- factor(grepl("T",colnames(xm)) )
+colnames(ss) <- c("sample","tumour")
+
+# DESeq2
+dds <- DESeqDataSetFromMatrix(countData = xm, colData = ss, design = ~ tumour)
+dds <- DESeq(dds)
+res <- DESeq2::results(dds)
+head(res)
+res <- res[order(res$pvalue),]
+head(res)
+
+# mitch
+
+#download.file("https://reactome.org/download/current/ReactomePathways.gmt.zip", destfile="ReactomePathways.gmt.zip")
+#unzip("ReactomePathways.gmt.zip")
+genesets <- gmt_import("ReactomePathways.gmt")
+m <- mitch_import(as.data.frame(res), DEtype="deseq2")
+mres <- mitch_calc(m, genesets, priority="effect")
+head(mres$enrichment_result,20)
+mup <- subset(mres$enrichment_result,`p.adjustANOVA`<0.05 & `s.dist`>0)$set
+mdn <- subset(mres$enrichment_result,`p.adjustANOVA`<0.05 & `s.dist`<0)$set
+length(mup)
+length(mdn)
+
+
+
+## downsample
+
+#myrange <- seq(2,ncol(xm)/2,1)
+
+myrange <- seq(36,2,-4)
+
+dsde <- function(n) {
+tum <- sample(subset(ss,tumour==TRUE)$sample,n)
+ctl <- sample(subset(ss,tumour!=TRUE)$sample,n)
+xm2 <- xm[,match(c(ctl,tum),colnames(xm))]
+ss2 <- as.data.frame(colnames(xm2))
+ss2$t <- factor(grepl("T",colnames(xm2)))
+dds <- DESeqDataSetFromMatrix(countData = xm2, colData = ss2, design = ~ t)
+dds <- DESeq(dds,parallel=FALSE)
+res <- DESeq2::results(dds)
+res <- res[order(res$pvalue),]
+m <- mitch_import(as.data.frame(res), DEtype="deseq2")
+mres <- mitch_calc(m, genesets, priority="effect",cores=1)
+mup <- subset(mres$enrichment_result,`p.adjustANOVA`<0.05 & `s.dist`>0)$set
+mdn <- subset(mres$enrichment_result,`p.adjustANOVA`<0.05 & `s.dist`<0)$set
+return(list("up"=mup,"dn"=mdn))
+}
+
+
+## summarise sensitivity results
+
+ms1 <- function(x) {
+  myup <- x[[1]]
+  mydn <- x[[2]]
+  cntup <- sum(mup %in% myup)
+  cntdn <- sum(mdn %in% mydn)
+  c("cntup"=cntup,"cntdn"=cntdn)
+}
+
+
+## replicates for each sample size
+runit <- function(n) {
+nreps=20
+mcres <- mclapply(1:nreps, function(i) { dsde(n) },mc.cores=6)
+mr2 <- lapply(mcres,ms1)
+mdf <- do.call(rbind,mr2)
+mysum <- length(mup) + length(mdn)
+mr3 <- apply(mdf,1, function(x) { sum(x) /  mysum }  )
+return(mr3)
+}
+
+save.image("GSE158420.Rdata")
+
+xres <- lapply( myrange , runit ) 
+
